@@ -1,0 +1,27 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="32dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    <!-- QR 3D Layered Look -->
+    <!-- Base Plate Shadow -->
+    <path
+        android:fillColor="#20000000"
+        android:pathData="M6,6h22v22h-22z" />
+    <!-- Base Plate -->
+    <path
+        android:fillColor="#ECEFF1"
+        android:pathData="M4,4h22v22h-22z" />
+    <!-- 3D Depth Edges -->
+    <path
+        android:fillColor="#CFD8DC"
+        android:pathData="M26,4l2,2v22l-2,-2z M4,26l2,2h22l-2,-2z" />
+    <!-- QR Pattern (Raised) -->
+    <path
+        android:fillColor="#1A237E"
+        android:pathData="M7,7h6v6h-6z M17,7h6v6h-6z M7,17h6v6h-6z M17,17h3v3h-3z M20,20h3v3h-3z" />
+    <!-- Glowing bits -->
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M8,8h4v4h-4z M18,8h4v4h-4z M8,18h4v4h-4z" />
+</vector>

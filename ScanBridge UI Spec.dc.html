@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/nocturne-6122ee28-aff1-4476-89ef-5c0fe52054c2/styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="./doc-page.js"></script>
+<style>
+doc-page:not(:defined){visibility:hidden}
+</style>
+</helmet>
+
+<doc-page margin="0.7in">
+<div style="font-family:Inter,Vazirmatn,system-ui,sans-serif;color:#161826;font-size:10.5pt;line-height:1.55">
+
+<div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid #161826;padding-bottom:10px">
+  <div>
+    <div style="font-size:8pt;font-weight:600;letter-spacing:.2em;color:#5d5294">SCANBRIDGE · ANDROID</div>
+    <h1 style="margin:6px 0 0;font-size:24pt;font-weight:500;letter-spacing:-.01em;line-height:1.1">UI Specification<br>&amp; Component Inventory</h1>
+  </div>
+  <div style="text-align:right;font-size:8.5pt;color:#595d6c;line-height:1.7">
+    v1.0 · Aug 2026<br>Design system: Nocturne<br>Target: Android / Jetpack Compose
+  </div>
+</div>
+
+<p style="margin:16px 0 0;font-size:11pt;line-height:1.6;color:#3f424d">This document specifies the visual and interaction layer for ScanBridge — the Android barcode scanner that pairs with a Windows host over WebSocket and types each scan into the focused field on that PC. It is written to be handed to an implementer (human or coding agent) alongside the interactive prototypes. <strong>The app's existing logic — pairing, socket lifecycle, queueing, ML Kit analysis, update checks — is unchanged. Only the presentation layer is respecified.</strong></p>
+
+<h2 style="margin:26px 0 0;font-size:15pt;font-weight:500;letter-spacing:-.01em">1 · Foundations</h2>
+<div style="height:1px;background:#cfd3e5;margin:8px 0 14px"></div>
+
+<h3 style="margin:0;font-size:11pt;font-weight:600">1.1 Color</h3>
+<p style="margin:5px 0 10px;color:#595d6c">Dark theme only. One accent, used as line, mark and glow — never as a large flood. Every value below is a Nocturne token; implement as a Compose <code>darkColorScheme</code> plus a small set of extra brand values.</p>
+
+<table style="width:100%;font-size:9pt;border-collapse:collapse">
+  <thead>
+    <tr><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Role</th><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Hex</th><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Compose slot</th><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Used for</th></tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Background</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><code>#161826</code></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">background</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">App ground, all screens</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Surface</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><code>#232532</code></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">surface</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Cards, tab bar, dialogs, sheets</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Camera ground</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><code>#0B0C14</code></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">—</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Behind the camera preview only</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Text</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><code>#E9E9ED</code></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">onBackground</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Primary copy</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Text muted</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><code>#E9E9ED</code> @ 50–60%</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">—</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Labels, meta, hints</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Accent</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><code>#9184D9</code></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">primary</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Primary actions, active tab fill, scan line</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Accent light</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><code>#B5ABFC</code></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">—</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Icons on dark, live dot, numerals</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Accent pale</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><code>#D2CEFD</code></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">—</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Accent text at body size (contrast-safe)</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Accent container</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><code>#423A6A</code></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">primaryContainer</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Active tab circle, tags, avatar</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Accent tint</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><code>#2B2741</code></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">—</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Icon tiles inside cards</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Divider</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><code>#E9E9ED</code> @ 10%</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">outlineVariant</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Card borders, row rules</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Divider accent</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><code>#9184D9</code> @ 30%</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">outline</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Borders of active/connected cards</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Neutral</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><code>#3F424D</code> / <code>#9397AB</code></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">surfaceVariant / onSurfaceVariant</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Off switch track, secondary icons</td></tr>
+  </tbody>
+</table>
+
+<p style="margin:10px 0 0;font-size:9pt;color:#595d6c"><strong>Rules.</strong> No pure black or white. Accent-on-background is ~3:1 — fine for icons, numerals and large text, not for paragraphs; use <code>#D2CEFD</code> for accent-colored body copy. Never fill more than a card with accent. Glow = <code>0 0 10dp</code> accent at 60% behind a 8dp dot, nothing heavier.</p>
+
+<h3 style="margin:20px 0 0;font-size:11pt;font-weight:600">1.2 Type</h3>
+<p style="margin:5px 0 8px;color:#595d6c">Inter (Latin) / Vazirmatn (Persian). Weights 400 / 500 / 600 only — headings never go past 500; hierarchy is size and space.</p>
+<table style="width:100%;font-size:9pt;border-collapse:collapse">
+  <thead><tr><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Style</th><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Size / weight</th><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Where</th></tr></thead>
+  <tbody>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Display</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">29sp / 500 / line-height 1.18</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Intro headline</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Screen title</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">21sp / 500</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">History, User panel, Messages</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Card title</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">16–19sp / 500</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">System name, sheet titles</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Body</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">13.5sp / 400 / 1.6</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Descriptions, row titles</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Label</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">11.5sp / 400</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Field labels, meta lines</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Caption / eyebrow</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">10sp / 600 / +0.12em, uppercase</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">"SYSTEM PAIRING", section eyebrows</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Mono</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">14–15sp / 500, monospace</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Every barcode value, timestamp, IP</td></tr>
+  </tbody>
+</table>
+<p style="margin:8px 0 0;font-size:9pt;color:#595d6c">Barcode payloads and timestamps are <strong>always monospace</strong> — that is the app's data voice. Persian numerals in UI copy, Latin numerals inside code payloads.</p>
+
+<h3 style="margin:20px 0 0;font-size:11pt;font-weight:600">1.3 Geometry, spacing, motion</h3>
+<ul style="margin:6px 0 0;padding-inline-start:20px;color:#3f424d">
+  <li>Radii: 10dp icon tile · 14dp list row · 16dp card · 18–22dp hero/sheet · 30dp tab bar · full round for pills and the tab circles.</li>
+  <li>Screen padding 18dp; gap between rows 8dp; between sections 20–24dp; bottom content padding 100dp to clear the floating bar.</li>
+  <li>Elevation is an edge plus ambient darkness — 1dp border + a single soft shadow. Never stack shadows.</li>
+  <li>Motion: screen enter = 300ms fade; sheets and cards = 280ms rise 18dp with a decelerate curve; the scan line loops 2.4s ease-in-out; the live dot pulses 1.8–2s.</li>
+  <li>Minimum touch target 48dp. Tab circles are 52dp, scanner controls 40dp inside a 48dp box.</li>
+</ul>
+
+<h3 style="margin:20px 0 0;font-size:11pt;font-weight:600">1.4 Localization</h3>
+<p style="margin:5px 0 0;color:#3f424d">Persian is the default and is fully RTL: the layout direction flips, chevrons and back arrows mirror, and all edge insets use start/end rather than left/right. Language switches live in the User panel; the change applies instantly without restart. Keep every string in resources — no literals in composables.</p>
+
+<h2 style="margin:26px 0 0;font-size:15pt;font-weight:500;letter-spacing:-.01em">2 · Screens</h2>
+<div style="height:1px;background:#cfd3e5;margin:8px 0 14px"></div>
+<p style="margin:0 0 12px;color:#595d6c">Screen names match the existing <code>AppScreen</code> enum. Navigation is unchanged.</p>
+
+<table style="width:100%;font-size:9pt;border-collapse:collapse">
+  <thead><tr><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Screen</th><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Purpose</th><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Composition</th><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Exits</th></tr></thead>
+  <tbody>
+    <tr>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>INTRO</strong></td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">First-run identity moment</td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Centered 150dp glyph tile with an animated scan line on a radial indigo wash; wordmark eyebrow, 27sp headline, one-line subtitle, full-width pill CTA, lock-icon caption. No tab bar.</td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">CTA → PAIRING</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>PAIRING</strong></td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Scan the QR shown by the Windows app</td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Live camera fills the screen; a glass instruction card pinned top; a square reticle with a pulsing accent border and dimmed surround; a bottom sheet stating "not connected yet" with the connect CTA. Naming dialog on success.</td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Success → naming dialog → SCANNER</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>SCANNER</strong></td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">The working screen — read and send</td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Greeting header with the system name and two icon actions (switch system, disconnect); connection card with status and scan speed; camera box with torch toggle; last-scan card with resend. Two approved layouts — see §2.1.</td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Header actions → PAIRING / INTRO; tab bar</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>HISTORY</strong></td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Review and resend past scans</td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Title with a clear-all icon action; two stat tiles (today's count, scan speed); reverse-chronological rows of timestamp + format + mono payload with a circular resend button that flips to a check for 900ms.</td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Tab bar</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>USER_PANEL</strong></td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Identity, system, preferences</td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Avatar + title; system-name card with an edit affordance; language card with two full-width choices; version card with a check-for-update action; messages row with an unread dot; website row.</td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Messages row → MESSAGES; tab bar</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>MESSAGES</strong></td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Update notices from the server</td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Back button + title; an accented card per available update (version tag, headline, release note, update CTA); a plain card for the "you're up to date" state.</td>
+      <td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Back → USER_PANEL; tab bar</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 style="margin:18px 0 0;font-size:11pt;font-weight:600">2.1 Scanner — two approved layouts</h3>
+<p style="margin:5px 0 0;color:#3f424d"><strong>A · Faithful.</strong> Mirrors the current composition: stacked header → connection card → square camera box → last-scan card. Chrome and camera are separate, so status is legible at a glance and the camera is a bounded object. Recommended default.</p>
+<p style="margin:7px 0 0;color:#3f424d"><strong>B · Overlay.</strong> The camera fills the tab; status, scan speed, torch and the last scan become floating glass chips over it. Roughly 40% more read area and a calmer screen, at the cost of contrast on bright labels. Ship as a preference if operators are scanning small or distant codes.</p>
+<p style="margin:7px 0 0;color:#595d6c;font-size:9pt">Both keep identical controls and identical state semantics. Do not mix them per-user without persisting the choice.</p>
+
+<h3 style="margin:18px 0 0;font-size:11pt;font-weight:600">2.2 States every screen must handle</h3>
+<table style="width:100%;font-size:9pt;border-collapse:collapse">
+  <thead><tr><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">State</th><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Treatment</th></tr></thead>
+  <tbody>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Connected</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Accent-light dot with glow + "Connected"; connection card border at accent 30%.</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Connecting / reconnecting</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Same dot pulsing at 1.4s; label "Reconnecting…"; controls stay enabled.</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Disconnected</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Dot drops to neutral <code>#595D6C</code>; card border to divider; header shows a reconnect action. Never a red alert — this is an expected condition.</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Queued scans</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Outlined accent tag with the count on the scan and history rows; queue count on the connection card.</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Send failed</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Neutral filled tag, not red; resend button remains the primary affordance.</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Camera permission denied</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Camera box becomes a surface card with the reason and a single "Open settings" action.</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Empty history</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Centered muted line plus one line of guidance; no illustration.</td></tr>
+  </tbody>
+</table>
+
+<h2 style="margin:26px 0 0;font-size:15pt;font-weight:500;letter-spacing:-.01em">3 · Component inventory</h2>
+<div style="height:1px;background:#cfd3e5;margin:8px 0 14px"></div>
+<p style="margin:0 0 12px;color:#595d6c">Every reusable piece in the design, with the props and states an implementation must expose. Names are proposed Composable names.</p>
+
+<table style="width:100%;font-size:8.5pt;border-collapse:collapse">
+  <thead><tr><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Component</th><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Props</th><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">States</th><th style="text-align:left;color:#161826;font-weight:600;font-size:8.5pt;letter-spacing:.04em;padding:6px 8px 6px 0;border-bottom:1.5px solid #161826">Used on</th></tr></thead>
+  <tbody>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>PrimaryButton</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">label, icon?, onClick, enabled</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">default / pressed (accent 400) / disabled 45% / focus ring 2dp</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Intro, Pairing, Messages, dialogs</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>SecondaryButton</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">label, icon?, onClick</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">default / pressed tint / disabled</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Panel, dialogs, header</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>IconActionButton</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">icon, onClick, tone (accent | neutral), glass?</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">default / pressed / active</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Scanner header, camera overlay, History</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>TorchToggle</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">on, onToggle</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">off (glass, neutral icon) / on (accent tint fill + accent border)</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Scanner</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>FloatingTabBar</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">current, onSelect(3 items)</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">per item: active (accent container circle) / inactive (50% icon)</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Scanner, History, Panel, Messages</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>StatusDot</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">state (live | connecting | offline)</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">glow + static / pulsing / flat neutral</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Scanner, Panel</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>ConnectionCard</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">systemName, state, scanSpeed, onSwitch</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">connected / reconnecting / offline</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Scanner</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>StatTile</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">value, label, accent?, sparkline?</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">static</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Scanner, History</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>CameraViewport</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">mode (boxed | fill), reticle, torchSlot, overlaySlots</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">scanning / permission denied / paused</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Scanner, Pairing</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>ScanReticle</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">shape (square | wide), animated</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">idle / reading (line loops) / hit (border flashes accent)</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Scanner, Pairing</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>LastScanCard</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">payload, onResend, elevated?</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">identified / sent / queued / failed</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Scanner</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>ScanRow</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">time, format, payload, onResend</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">idle / resending / confirmed (check, 900ms)</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">History</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>SettingRow</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">icon, title, subtitle?, trailing (chevron | tag | action), onClick?</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">default / pressed / unread badge</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">User panel</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>LanguageChoice</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">options, selected, onSelect</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">selected (accent container) / unselected (outlined)</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">User panel</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>SwitchRow</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">label, hint, checked, onChange</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">on (accent track) / off (neutral track)</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Settings sections</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>Tag</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">text, variant (accent | outline | neutral)</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">static</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">History, Messages, Panel</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>GlassChip</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">content, icon?</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">static (blur 10dp over camera)</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Scanner overlay, Pairing</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>NamingDialog</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">value, onConfirm, onCancel</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">empty / typed / error</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Pairing</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>ResultSheet</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">payload, meta, latency, onNext, onHistory</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">enter (rise) / visible / dismiss</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Scanner</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>UpdateCard</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">version, note, onUpdate</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">available (accent border) / up-to-date (plain)</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Messages</td></tr>
+    <tr><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top"><strong>SectionEyebrow</strong></td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">text</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">static</td><td style="padding:6px 8px 6px 0;border-bottom:1px solid #cfd3e5;vertical-align:top">Panel, Settings</td></tr>
+  </tbody>
+</table>
+
+<h2 style="margin:26px 0 0;font-size:15pt;font-weight:500;letter-spacing:-.01em">4 · Implementation order</h2>
+<div style="height:1px;background:#cfd3e5;margin:8px 0 14px"></div>
+<ol style="margin:0;padding-inline-start:20px;color:#3f424d">
+  <li><strong>Theme first.</strong> Replace <code>Color.kt</code> and the dark scheme in <code>Theme.kt</code> with §1.1, and the type scale in <code>Type.kt</code> with §1.2. Because the app reads <code>MaterialTheme.colorScheme</code> throughout, this alone delivers most of the visual change with zero risk to logic.</li>
+  <li><strong>Shared components.</strong> Build the inventory in §3 as small stateless composables in a <code>ui/components</code> package. No business logic inside them; every one takes data plus callbacks.</li>
+  <li><strong>Screens, one at a time.</strong> Re-lay each screen from §2 using those components, in order: USER_PANEL → HISTORY → SCANNER → PAIRING → INTRO (lowest risk to highest). Leave view-model and socket code untouched.</li>
+  <li><strong>States pass.</strong> Walk §2.2 on a real pairing with the Windows host, including pulling the network cable mid-scan.</li>
+  <li><strong>RTL pass.</strong> Force Persian and check every mirrored inset, chevron and arrow.</li>
+</ol>
+
+<p style="margin:22px 0 0;padding:12px 14px;border:1px solid #cfd3e5;border-radius:8px;background:#f3f5fe;font-size:9.5pt;color:#3f424d"><strong>Do not rewrite the app.</strong> The current implementation already owns pairing, the socket lifecycle, offline queueing, ML Kit analysis and update checks. This specification is a re-skin plus a component extraction — scoped to theme files, a new components package, and the body of each screen composable.</p>
+
+</div>
+</doc-page>
+</x-dc>
+</body>
+</html>

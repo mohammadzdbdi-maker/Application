@@ -1,0 +1,23 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="32dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    <!-- Barcode 3D Box Look -->
+    <!-- Shadow -->
+    <path
+        android:fillColor="#20000000"
+        android:pathData="M6,10h22v16h-22z" />
+    <!-- Side Depth -->
+    <path
+        android:fillColor="#B0BEC5"
+        android:pathData="M4,24l2,2h22l-2,-2z" />
+    <!-- Front Face -->
+    <path
+        android:fillColor="#ECEFF1"
+        android:pathData="M4,8h22v16h-22z" />
+    <!-- 1D Stripes -->
+    <path
+        android:fillColor="#1A237E"
+        android:pathData="M7,11h2v10h-2z M10,11h1v10h-1z M12,11h3v10h-3z M16,11h1v10h-1z M18,11h2v10h-2z M21,11h3v10h-3z" />
+</vector>

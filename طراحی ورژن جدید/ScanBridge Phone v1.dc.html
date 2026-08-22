@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/nocturne-6122ee28-aff1-4476-89ef-5c0fe52054c2/styles.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+@keyframes sb-scanline{0%{transform:translateY(0);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateY(188px);opacity:0}}
+@keyframes sb-pulse{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes sb-rise{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes sb-fade{from{opacity:0}to{opacity:1}}
+</style>
+</helmet>
+
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" width="{{ 412 }}" height="{{ 892 }}" hint-size="412px,892px">
+<div dir="{{ dir }}" style="{{ rootStyle }}">
+
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:44px 22px 26px;background:radial-gradient(130% 60% at 50% 0%, #262a60 0%, rgba(38,42,96,0) 60%), #161826;animation:sb-fade .3s ease">
+  <div style="display:flex;align-items:center;gap:9px">
+    <div style="width:26px;height:26px;border-radius:7px;border:1px solid #9184d9;display:grid;place-items:center">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#9184d9" stroke-width="1.6"><path d="M2 5V2.8A.8.8 0 0 1 2.8 2H5M11 2h2.2a.8.8 0 0 1 .8.8V5M14 11v2.2a.8.8 0 0 1-.8.8H11M5 14H2.8a.8.8 0 0 1-.8-.8V11"></path><path d="M2 8h12"></path></svg>
+    </div>
+    <span style="font-size:15px;font-weight:500;letter-spacing:.02em">{{ t.appName }}</span>
+    <div style="flex:1"></div>
+    <div style="display:flex;border:1px solid rgba(233,233,237,.16);border-radius:9px;overflow:hidden;font-size:11px">
+      <div style="{{ langEnStyle }}" onClick="{{ setEn }}">EN</div>
+      <div style="{{ langFaStyle }}" onClick="{{ setFa }}">فا</div>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:340px">
+    <h2 style="margin:0;font-size:29px;line-height:1.18;font-weight:500;letter-spacing:-.02em;text-wrap:pretty">{{ t.loginTitle }}</h2>
+    <p style="margin:10px 0 0;font-size:13.5px;line-height:1.6;color:rgba(233,233,237,.6)">{{ t.loginBody }}</p>
+
+    <div class="field" style="margin-top:26px">
+      <label>{{ t.operatorId }}</label>
+      <div style="display:flex;align-items:center;gap:9px;height:46px;padding:0 12px;border-radius:12px;background:#232532;border:1px solid rgba(233,233,237,.16)">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="rgba(233,233,237,.5)" stroke-width="1.5"><circle cx="10" cy="7" r="3"></circle><path d="M4 17c1-3.2 3.2-4.6 6-4.6s5 1.4 6 4.6"></path></svg>
+        <span style="font-size:14px;font-family:ui-monospace,Menlo,monospace">OP-4471</span>
+      </div>
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label>{{ t.passcode }}</label>
+      <div style="display:flex;align-items:center;gap:9px;height:46px;padding:0 12px;border-radius:12px;background:#232532;border:1px solid #9184d9">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#b5abfc" stroke-width="1.5"><rect x="4" y="8.5" width="12" height="8" rx="2"></rect><path d="M7 8.5V6a3 3 0 0 1 6 0v2.5"></path></svg>
+        <div style="display:flex;gap:7px">
+          <div style="width:7px;height:7px;border-radius:50%;background:#e9e9ed"></div>
+          <div style="width:7px;height:7px;border-radius:50%;background:#e9e9ed"></div>
+          <div style="width:7px;height:7px;border-radius:50%;background:#e9e9ed"></div>
+          <div style="width:7px;height:7px;border-radius:50%;background:#e9e9ed"></div>
+          <div style="width:7px;height:7px;border-radius:50%;background:rgba(233,233,237,.25)"></div>
+          <div style="width:7px;height:7px;border-radius:50%;background:rgba(233,233,237,.25)"></div>
+        </div>
+        <div style="flex:1"></div>
+        <span style="font-size:11px;color:#d2cefd">{{ t.show }}</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-block" style="height:48px;border-radius:13px;font-size:15px;margin-top:20px" onClick="{{ goOnboard }}">{{ t.signIn }}</button>
+
+    <div style="display:flex;align-items:center;gap:10px;margin:18px 0">
+      <div style="flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(233,233,237,.16))"></div>
+      <span style="font-size:11px;color:rgba(233,233,237,.4)">{{ t.or }}</span>
+      <div style="flex:1;height:1px;background:linear-gradient(to left,transparent,rgba(233,233,237,.16))"></div>
+    </div>
+
+    <button class="btn btn-secondary btn-block" style="height:46px;border-radius:13px;font-size:14px;margin:0" onClick="{{ goScan }}">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 5V2.8A.8.8 0 0 1 2.8 2H5M11 2h2.2a.8.8 0 0 1 .8.8V5M14 11v2.2a.8.8 0 0 1-.8.8H11M5 14H2.8a.8.8 0 0 1-.8-.8V11"></path><path d="M2 8h12"></path></svg>
+      {{ t.pairInstead }}</button>
+    <p style="margin:16px 0 0;text-align:center;font-size:11px;color:rgba(233,233,237,.4)">{{ t.loginFoot }}</p>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isOnboard }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:44px 22px 26px;background:radial-gradient(120% 55% at 50% 4%, #262a60 0%, rgba(38,42,96,0) 58%), #161826;animation:sb-fade .3s ease">
+  <div style="display:flex;justify-content:flex-end">
+    <span style="font-size:12.5px;color:rgba(233,233,237,.5)" onClick="{{ goHome }}">{{ t.skip }}</span>
+  </div>
+
+  <div style="margin-top:16px;height:250px;border-radius:16px;background:#232532;box-shadow:var(--shadow-md);position:relative;overflow:hidden;display:grid;place-items:center">
+    <div style="position:absolute;inset:0;background:radial-gradient(85% 70% at 50% 45%, rgba(145,132,217,.18), transparent 72%)"></div>
+    <div style="display:flex;align-items:center;gap:26px;position:relative">
+      <div style="width:74px;height:96px;border-radius:11px;border:1px solid rgba(233,233,237,.2);background:#161826;display:grid;place-items:center;position:relative;overflow:hidden">
+        <div style="display:flex;gap:2.5px;align-items:flex-end;height:38px">
+          <div style="width:3px;height:38px;background:#cfd3e5"></div><div style="width:2px;height:38px;background:#75798c"></div><div style="width:5px;height:38px;background:#f3f5fe"></div><div style="width:2px;height:38px;background:#595d6c"></div><div style="width:4px;height:38px;background:#cfd3e5"></div><div style="width:2px;height:38px;background:#75798c"></div><div style="width:6px;height:38px;background:#e4e7f5"></div>
+        </div>
+        <div style="position:absolute;left:8px;right:8px;top:20px;height:1.5px;background:#b5abfc;box-shadow:0 0 12px 2px rgba(181,171,252,.6);animation:sb-pulse 1.6s ease-in-out infinite"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;align-items:center">
+        <div style="display:flex;gap:4px">
+          <div style="width:5px;height:5px;border-radius:50%;background:#b5abfc;animation:sb-pulse 1.4s ease-in-out infinite"></div>
+          <div style="width:5px;height:5px;border-radius:50%;background:#b5abfc;animation:sb-pulse 1.4s .2s ease-in-out infinite"></div>
+          <div style="width:5px;height:5px;border-radius:50%;background:#b5abfc;animation:sb-pulse 1.4s .4s ease-in-out infinite"></div>
+        </div>
+        <span style="font-size:9px;letter-spacing:.1em;color:rgba(233,233,237,.45);text-transform:uppercase">LAN</span>
+      </div>
+      <div style="width:104px;height:78px;border-radius:9px;border:1px solid rgba(233,233,237,.2);background:#161826;position:relative;display:grid;place-items:center">
+        <div style="width:78px;height:44px;border-radius:4px;background:linear-gradient(160deg,#2b2741,#1b1d2b);border:1px solid rgba(145,132,217,.35)"></div>
+        <div style="position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);width:40px;height:5px;border-radius:0 0 5px 5px;background:rgba(233,233,237,.2)"></div>
+      </div>
+    </div>
+  </div>
+
+  <h2 style="margin:30px 0 0;font-size:29px;line-height:1.16;font-weight:500;letter-spacing:-.02em;text-wrap:pretty">{{ t.onbTitle }}</h2>
+  <p style="margin:12px 0 0;font-size:13.5px;line-height:1.65;color:rgba(233,233,237,.6);max-width:320px;text-wrap:pretty">{{ t.onbBody }}</p>
+
+  <div style="flex:1"></div>
+  <div style="display:flex;gap:5px;margin-bottom:18px">
+    <div style="width:18px;height:3px;border-radius:2px;background:#9184d9"></div>
+    <div style="width:6px;height:3px;border-radius:2px;background:#3f424d"></div>
+    <div style="width:6px;height:3px;border-radius:2px;background:#3f424d"></div>
+  </div>
+  <button class="btn btn-primary btn-block" style="height:48px;border-radius:13px;font-size:15px" onClick="{{ goHome }}">{{ t.continue }}</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;overflow:auto;padding:20px 18px 96px;animation:sb-fade .3s ease">
+  <div style="display:flex;align-items:center;gap:11px">
+    <div style="width:40px;height:40px;border-radius:12px;background:#423a6a;color:#f5f4ff;display:grid;place-items:center;font-size:13px;font-weight:600">KM</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:11px;color:rgba(233,233,237,.5)">{{ t.greeting }}</div>
+      <div style="font-size:18px;font-weight:500;line-height:1.2">{{ t.userName }}</div>
+    </div>
+    <div style="display:flex;border:1px solid rgba(233,233,237,.16);border-radius:9px;overflow:hidden;font-size:11px;margin-inline-end:6px">
+      <div style="{{ langEnStyle }}" onClick="{{ setEn }}">EN</div>
+      <div style="{{ langFaStyle }}" onClick="{{ setFa }}">فا</div>
+    </div>
+    <button class="btn btn-secondary btn-icon" style="border-radius:12px;position:relative" onClick="{{ goNotif }}">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 8a5 5 0 0 1 10 0c0 4 1.5 5 1.5 5h-13S5 12 5 8Z"></path><path d="M8.3 16a1.9 1.9 0 0 0 3.4 0"></path></svg>
+      <span style="position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:#9184d9;box-shadow:0 0 0 2px #161826"></span>
+    </button>
+  </div>
+
+  <div style="margin-top:16px;border-radius:16px;padding:15px;background:#232532;border:1px solid rgba(145,132,217,.3);position:relative;overflow:hidden">
+    <div style="position:absolute;inset-inline-end:-40px;top:-50px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(145,132,217,.2),transparent 68%)"></div>
+    <div style="position:relative;display:flex;align-items:center;gap:12px">
+      <div style="width:9px;height:9px;border-radius:50%;background:#b5abfc;box-shadow:0 0 10px 2px rgba(181,171,252,.7);animation:sb-pulse 2s ease-in-out infinite"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#d2cefd">{{ t.connectedTo }}</div>
+        <div style="font-size:19px;font-weight:500;line-height:1.25;margin-top:2px;font-family:ui-monospace,Menlo,monospace">DESK-07</div>
+        <div style="font-size:11.5px;color:rgba(233,233,237,.5);margin-top:2px">{{ t.stationMeta }}</div>
+      </div>
+      <button class="btn btn-secondary" style="height:32px;border-radius:10px;font-size:12px" onClick="{{ goSettings }}">{{ t.switchPc }}</button>
+    </div>
+  </div>
+
+  <sc-if value="{{ isFocus }}" hint-placeholder-val="{{ true }}">
+  <div style="margin-top:14px;border-radius:18px;padding:22px 18px;background:linear-gradient(165deg,#262a60 0%,#1c1e33 70%);border:1px solid rgba(145,132,217,.28);position:relative;overflow:hidden;text-align:center" onClick="{{ goScan }}">
+    <div style="position:absolute;inset:0;background:radial-gradient(70% 60% at 50% 30%,rgba(145,132,217,.22),transparent 70%)"></div>
+    <div style="position:relative;display:grid;place-items:center;gap:14px">
+      <div style="width:96px;height:96px;border-radius:28px;border:1.5px solid rgba(181,171,252,.55);display:grid;place-items:center;background:rgba(22,24,38,.45)">
+        <svg width="42" height="42" viewBox="0 0 16 16" fill="none" stroke="#d2cefd" stroke-width="1.1"><path d="M2 5V2.8A.8.8 0 0 1 2.8 2H5M11 2h2.2a.8.8 0 0 1 .8.8V5M14 11v2.2a.8.8 0 0 1-.8.8H11M5 14H2.8a.8.8 0 0 1-.8-.8V11"></path><path d="M2 8h12"></path></svg>
+      </div>
+      <div>
+        <div style="font-size:20px;font-weight:500">{{ t.tapToScan }}</div>
+        <div style="font-size:12px;color:rgba(233,233,237,.55);margin-top:3px">{{ t.tapToScanSub }}</div>
+      </div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px">
+    <div style="padding:12px;border-radius:14px;background:#232532;border:1px solid rgba(233,233,237,.1)">
+      <div style="font-size:23px;font-weight:500;letter-spacing:-.02em">248</div>
+      <div style="font-size:10.5px;color:rgba(233,233,237,.5);margin-top:2px">{{ t.scansToday }}</div>
+    </div>
+    <div style="padding:12px;border-radius:14px;background:#232532;border:1px solid rgba(233,233,237,.1)">
+      <div style="font-size:23px;font-weight:500;letter-spacing:-.02em;color:#b5abfc">3</div>
+      <div style="font-size:10.5px;color:rgba(233,233,237,.5);margin-top:2px">{{ t.queued }}</div>
+    </div>
+    <div style="padding:12px;border-radius:14px;background:#232532;border:1px solid rgba(233,233,237,.1)">
+      <div style="font-size:23px;font-weight:500;letter-spacing:-.02em">14<span style="font-size:12px;color:rgba(233,233,237,.5)">ms</span></div>
+      <div style="font-size:10.5px;color:rgba(233,233,237,.5);margin-top:2px">{{ t.latency }}</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isGrid }}" hint-placeholder-val="{{ false }}">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px">
+    <div style="padding:14px;border-radius:14px;background:#232532;border:1px solid rgba(233,233,237,.1);display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:30px;font-weight:500;letter-spacing:-.02em">248</span><span style="font-size:11px;color:#b5abfc">+18</span></div>
+      <div style="font-size:11px;color:rgba(233,233,237,.5)">{{ t.scansToday }}</div>
+      <div style="display:flex;gap:3px;align-items:flex-end;height:26px">
+        <div style="flex:1;height:30%;background:#3f424d;border-radius:2px"></div><div style="flex:1;height:52%;background:#3f424d;border-radius:2px"></div><div style="flex:1;height:41%;background:#3f424d;border-radius:2px"></div><div style="flex:1;height:74%;background:#5d5294;border-radius:2px"></div><div style="flex:1;height:63%;background:#5d5294;border-radius:2px"></div><div style="flex:1;height:100%;background:#9184d9;border-radius:2px"></div><div style="flex:1;height:47%;background:#3f424d;border-radius:2px"></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="padding:13px;border-radius:14px;background:#232532;border:1px solid rgba(233,233,237,.1);flex:1">
+        <div style="font-size:22px;font-weight:500;color:#b5abfc">3</div>
+        <div style="font-size:10.5px;color:rgba(233,233,237,.5);margin-top:1px">{{ t.queued }}</div>
+      </div>
+      <div style="padding:13px;border-radius:14px;background:#232532;border:1px solid rgba(233,233,237,.1);flex:1">
+        <div style="font-size:22px;font-weight:500">99.6<span style="font-size:12px;color:rgba(233,233,237,.5)">%</span></div>
+        <div style="font-size:10.5px;color:rgba(233,233,237,.5);margin-top:1px">{{ t.delivered }}</div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin:20px 0 9px">
+    <h5 style="margin:0;font-size:14.5px;font-weight:500">{{ t.stations }}</h5>
+    <span style="font-size:12px;color:#d2cefd" onClick="{{ goSettings }}">{{ t.manage }}</span>
+  </div>
+  <div style="display:flex;gap:9px;overflow:auto;padding-bottom:2px">
+    <sc-for list="{{ stations }}" as="s" hint-placeholder-count="3">
+      <div style="{{ s.style }}" onClick="{{ s.pick }}">
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="{{ s.dot }}"></div>
+          <span style="font-size:13.5px;font-weight:500;font-family:ui-monospace,Menlo,monospace">{{ s.name }}</span>
+        </div>
+        <div style="font-size:10.5px;color:rgba(233,233,237,.5);margin-top:5px">{{ s.meta }}</div>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin:22px 0 9px">
+    <h5 style="margin:0;font-size:14.5px;font-weight:500">{{ t.recentScans }}</h5>
+    <span style="font-size:12px;color:#d2cefd" onClick="{{ goHistory }}">{{ t.seeAll }}</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <sc-for list="{{ recents }}" as="row" hint-placeholder-count="4">
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:14px;background:#232532;border:1px solid rgba(233,233,237,.1)">
+        <div style="width:34px;height:34px;border-radius:10px;background:#161826;border:1px solid rgba(233,233,237,.12);display:grid;place-items:center;font-size:8.5px;letter-spacing:.06em;color:#b2b6ca;font-family:ui-monospace,Menlo,monospace">{{ row.kind }}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ row.title }}</div>
+          <div style="font-size:10.5px;color:rgba(233,233,237,.5);font-family:ui-monospace,Menlo,monospace;margin-top:2px">{{ row.code }} · {{ row.time }}</div>
+        </div>
+        <span class="tag" style="{{ row.tagStyle }}">{{ row.status }}</span>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isScan }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;position:relative;background:#0b0c14;overflow:hidden;animation:sb-fade .25s ease">
+  <div style="position:absolute;inset:0;background:radial-gradient(72% 44% at 50% 40%, #1e2033 0%, #0b0c14 78%)"></div>
+  <div style="position:absolute;inset:0;opacity:.32;background-image:linear-gradient(rgba(233,233,237,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(233,233,237,.06) 1px,transparent 1px);background-size:34px 34px"></div>
+
+  <div style="position:absolute;top:16px;inset-inline-start:16px;inset-inline-end:16px;display:flex;align-items:center;gap:8px;z-index:4">
+    <button class="btn btn-secondary btn-icon" style="border-radius:12px;background:rgba(22,24,38,.6)" onClick="{{ goHome }}">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 5l10 10M15 5 5 15"></path></svg>
+    </button>
+    <div style="flex:1;display:flex;justify-content:center">
+      <div style="display:flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:999px;background:rgba(22,24,38,.75);border:1px solid rgba(145,132,217,.4)">
+        <div style="width:6px;height:6px;border-radius:50%;background:#b5abfc;animation:sb-pulse 1.8s ease-in-out infinite"></div>
+        <span style="font-size:11.5px;font-family:ui-monospace,Menlo,monospace">DESK-07</span>
+      </div>
+    </div>
+    <button class="btn btn-secondary btn-icon" style="border-radius:12px;background:rgba(22,24,38,.6)">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2 4.5 11H9.5L9 18l6.5-9H10.5Z"></path></svg>
+    </button>
+  </div>
+
+  <div style="position:absolute;inset-inline-start:38px;inset-inline-end:38px;top:200px;height:228px;border-radius:18px;z-index:2">
+    <div style="position:absolute;inset:0;border-radius:18px;box-shadow:0 0 0 2000px rgba(11,12,20,.58)"></div>
+    <div style="position:absolute;inset-inline-start:0;top:0;width:34px;height:34px;border-inline-start:2.5px solid #b5abfc;border-top:2.5px solid #b5abfc;border-start-start-radius:16px"></div>
+    <div style="position:absolute;inset-inline-end:0;top:0;width:34px;height:34px;border-inline-end:2.5px solid #b5abfc;border-top:2.5px solid #b5abfc;border-start-end-radius:16px"></div>
+    <div style="position:absolute;inset-inline-start:0;bottom:0;width:34px;height:34px;border-inline-start:2.5px solid #b5abfc;border-bottom:2.5px solid #b5abfc;border-end-start-radius:16px"></div>
+    <div style="position:absolute;inset-inline-end:0;bottom:0;width:34px;height:34px;border-inline-end:2.5px solid #b5abfc;border-bottom:2.5px solid #b5abfc;border-end-end-radius:16px"></div>
+    <div style="position:absolute;inset-inline:14px;top:18px;height:2px;background:linear-gradient(to right,transparent,#b5abfc,transparent);box-shadow:0 0 20px 4px rgba(181,171,252,.45);animation:sb-scanline 2.4s ease-in-out infinite"></div>
+    <div style="position:absolute;inset:0;display:grid;place-items:center">
+      <div style="display:flex;gap:4px;align-items:flex-end;height:76px;opacity:.9;transform:rotate(-1.5deg)">
+        <div style="width:4px;height:76px;background:#cfd3e5"></div><div style="width:3px;height:76px;background:#75798c"></div><div style="width:8px;height:76px;background:#f3f5fe"></div><div style="width:3px;height:76px;background:#595d6c"></div><div style="width:5px;height:76px;background:#cfd3e5"></div><div style="width:10px;height:76px;background:#e4e7f5"></div><div style="width:3px;height:76px;background:#75798c"></div><div style="width:6px;height:76px;background:#cfd3e5"></div><div style="width:3px;height:76px;background:#595d6c"></div><div style="width:9px;height:76px;background:#f3f5fe"></div><div style="width:4px;height:76px;background:#9397ab"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;inset-inline:0;top:448px;text-align:center;z-index:3;font-size:12.5px;color:rgba(233,233,237,.6);padding:0 40px">{{ t.scanHint }}</div>
+
+  <div style="position:absolute;inset-inline:0;bottom:126px;z-index:3;display:flex;gap:7px;justify-content:center;padding:0 14px">
+    <sc-for list="{{ modes }}" as="m" hint-placeholder-count="3">
+      <div style="{{ m.style }}" onClick="{{ m.pick }}">{{ m.label }}</div>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute;inset-inline:0;bottom:34px;z-index:3;display:flex;align-items:center;justify-content:center;gap:38px">
+    <button class="btn btn-secondary btn-icon" style="border-radius:12px;background:rgba(22,24,38,.6)" onClick="{{ goHistory }}">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="7"></circle><path d="M10 6v4.3l2.8 1.7"></path></svg>
+    </button>
+    <div style="width:72px;height:72px;border-radius:50%;border:2px solid rgba(233,233,237,.35);display:grid;place-items:center;cursor:pointer" onClick="{{ capture }}">
+      <div style="width:56px;height:56px;border-radius:50%;background:#9184d9;box-shadow:0 0 24px rgba(145,132,217,.5)"></div>
+    </div>
+    <button class="btn btn-secondary btn-icon" style="border-radius:12px;background:rgba(22,24,38,.6)">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3 3 6l3 3M3 6h9a5 5 0 0 1 0 10H8"></path></svg>
+    </button>
+  </div>
+
+  <sc-if value="{{ showSheet }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:6;background:rgba(11,12,20,.55);display:flex;align-items:flex-end" onClick="{{ closeSheet }}">
+    <div style="width:100%;background:#232532;border-radius:20px 20px 0 0;padding:18px 18px 26px;box-shadow:var(--shadow-lg);animation:sb-rise .28s cubic-bezier(.2,.8,.2,1)">
+      <div style="width:36px;height:4px;border-radius:2px;background:rgba(233,233,237,.2);margin:0 auto 16px"></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:14px;background:#2b2741;display:grid;place-items:center">
+          <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="#b5abfc" stroke-width="1.8"><path d="M4.5 10.5 8 14l7.5-8"></path></svg>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:500">{{ t.sentTitle }}</div>
+          <div style="font-size:12px;color:rgba(233,233,237,.55);margin-top:2px">{{ t.sentSub }}</div>
+        </div>
+        <span class="tag tag-accent">14ms</span>
+      </div>
+      <div style="margin-top:14px;padding:13px;border-radius:13px;background:#161826;border:1px solid rgba(233,233,237,.1)">
+        <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(233,233,237,.45)">{{ t.payload }}</div>
+        <div style="font-size:16px;font-family:ui-monospace,Menlo,monospace;margin-top:5px;letter-spacing:.02em">8 412 9930 0771</div>
+        <div style="font-size:11.5px;color:rgba(233,233,237,.5);margin-top:4px">EAN-13 · Pallet A/12 · Ridgeline Crate 40L</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-secondary" style="flex:1;height:44px;border-radius:13px" onClick="{{ goHistory }}">{{ t.viewHistory }}</button>
+        <button class="btn btn-primary" style="flex:1;height:44px;border-radius:13px" onClick="{{ closeSheet }}">{{ t.scanNext }}</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSearch }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;overflow:auto;padding:20px 18px 96px;animation:sb-fade .3s ease">
+  <h4 style="margin:0 0 14px;font-size:22px;font-weight:500">{{ t.search }}</h4>
+  <div style="display:flex;align-items:center;gap:9px;height:46px;padding:0 12px;border-radius:14px;background:#232532;border:1px solid #9184d9">
+    <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#b5abfc" stroke-width="1.6"><circle cx="9" cy="9" r="6"></circle><path d="m13.5 13.5 3 3"></path></svg>
+    <span style="font-size:14px;font-family:ui-monospace,Menlo,monospace">8412</span>
+    <div style="width:1px;height:16px;background:#b5abfc;animation:sb-pulse 1s steps(1) infinite"></div>
+  </div>
+  <div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap">
+    <span class="tag tag-outline">{{ t.allTypes }}</span>
+    <span class="tag tag-neutral">EAN-13</span>
+    <span class="tag tag-neutral">QR</span>
+    <span class="tag tag-neutral">{{ t.today }}</span>
+  </div>
+  <div style="font-size:11px;color:rgba(233,233,237,.45);margin:18px 0 9px">{{ t.resultsCount }}</div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <sc-for list="{{ results }}" as="row" hint-placeholder-count="4">
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:14px;background:#232532;border:1px solid rgba(233,233,237,.1)">
+        <div style="width:34px;height:34px;border-radius:10px;background:#161826;border:1px solid rgba(233,233,237,.12);display:grid;place-items:center;font-size:8.5px;color:#b2b6ca;font-family:ui-monospace,Menlo,monospace">{{ row.kind }}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13.5px;font-weight:500">{{ row.title }}</div>
+          <div style="font-size:10.5px;color:rgba(233,233,237,.5);font-family:ui-monospace,Menlo,monospace;margin-top:2px">{{ row.code }}</div>
+        </div>
+        <span style="font-size:11px;color:rgba(233,233,237,.45)">{{ row.time }}</span>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;overflow:auto;padding:20px 18px 96px;animation:sb-fade .3s ease">
+  <div style="display:flex;align-items:center">
+    <h4 style="margin:0;font-size:22px;font-weight:500;flex:1">{{ t.history }}</h4>
+    <button class="btn btn-secondary" style="height:32px;border-radius:10px;font-size:12px">{{ t.export }}</button>
+  </div>
+  <div style="display:flex;gap:7px;margin-top:14px">
+    <span class="tag tag-outline">{{ t.all }}</span>
+    <span class="tag tag-neutral">{{ t.sent }}</span>
+    <span class="tag tag-neutral">{{ t.queued }}</span>
+    <span class="tag tag-neutral">{{ t.failed }}</span>
+  </div>
+  <sc-for list="{{ historyGroups }}" as="g" hint-placeholder-count="2">
+    <div style="margin-top:20px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px">
+        <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(233,233,237,.45)">{{ g.day }}</span>
+        <span style="font-size:11px;color:rgba(233,233,237,.35)">{{ g.count }}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ g.rows }}" as="row" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:14px;background:#232532;border:1px solid rgba(233,233,237,.1)">
+            <div style="width:34px;height:34px;border-radius:10px;background:#161826;border:1px solid rgba(233,233,237,.12);display:grid;place-items:center;font-size:8.5px;color:#b2b6ca;font-family:ui-monospace,Menlo,monospace">{{ row.kind }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ row.title }}</div>
+              <div style="font-size:10.5px;color:rgba(233,233,237,.5);font-family:ui-monospace,Menlo,monospace;margin-top:2px">{{ row.code }} · {{ row.time }} · {{ row.pc }}</div>
+            </div>
+            <span class="tag" style="{{ row.tagStyle }}">{{ row.status }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isNotif }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;overflow:auto;padding:20px 18px 96px;animation:sb-fade .3s ease">
+  <div style="display:flex;align-items:center">
+    <button class="btn btn-secondary btn-icon" style="border-radius:11px;margin-inline-end:10px" onClick="{{ goHome }}">
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M11.5 4 5.5 10l6 6"></path></svg>
+    </button>
+    <h4 style="margin:0;font-size:21px;font-weight:500;flex:1">{{ t.notifications }}</h4>
+    <span style="font-size:12px;color:#d2cefd">{{ t.markAll }}</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+    <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="4">
+      <div style="{{ n.style }}">
+        <div style="{{ n.iconStyle }}">
+          <div style="width:8px;height:8px;border-radius:50%;background:currentColor"></div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13.5px;font-weight:500;text-wrap:pretty">{{ n.title }}</div>
+          <div style="font-size:11.5px;color:rgba(233,233,237,.55);margin-top:3px;line-height:1.5;text-wrap:pretty">{{ n.body }}</div>
+          <div style="font-size:10.5px;color:rgba(233,233,237,.35);margin-top:5px">{{ n.time }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;overflow:auto;padding:20px 18px 96px;animation:sb-fade .3s ease">
+  <div style="display:flex;flex-direction:column;align-items:center;padding:14px 0 6px">
+    <div style="width:76px;height:76px;border-radius:24px;background:#423a6a;color:#f5f4ff;display:grid;place-items:center;font-size:24px;font-weight:600;box-shadow:var(--shadow-md)">KM</div>
+    <div style="font-size:20px;font-weight:500;margin-top:12px">{{ t.userName }}</div>
+    <div style="font-size:12px;color:rgba(233,233,237,.5);font-family:ui-monospace,Menlo,monospace;margin-top:3px">OP-4471 · {{ t.warehouseB }}</div>
+    <div style="display:flex;gap:7px;margin-top:11px">
+      <span class="tag tag-accent">{{ t.shiftActive }}</span>
+      <span class="tag tag-neutral">{{ t.level3 }}</span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:18px">
+    <div style="padding:12px;border-radius:14px;background:#232532;border:1px solid rgba(233,233,237,.1);text-align:center">
+      <div style="font-size:20px;font-weight:500">12.4k</div>
+      <div style="font-size:10px;color:rgba(233,233,237,.5);margin-top:2px">{{ t.totalScans }}</div>
+    </div>
+    <div style="padding:12px;border-radius:14px;background:#232532;border:1px solid rgba(233,233,237,.1);text-align:center">
+      <div style="font-size:20px;font-weight:500">6</div>
+      <div style="font-size:10px;color:rgba(233,233,237,.5);margin-top:2px">{{ t.pairedPcs }}</div>
+    </div>
+    <div style="padding:12px;border-radius:14px;background:#232532;border:1px solid rgba(233,233,237,.1);text-align:center">
+      <div style="font-size:20px;font-weight:500">99.6%</div>
+      <div style="font-size:10px;color:rgba(233,233,237,.5);margin-top:2px">{{ t.delivered }}</div>
+    </div>
+  </div>
+
+  <div style="margin-top:18px;border-radius:16px;background:#232532;border:1px solid rgba(233,233,237,.1);overflow:hidden">
+    <div style="display:flex;align-items:center;gap:12px;padding:14px" onClick="{{ goSettings }}">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#b5abfc" stroke-width="1.5"><circle cx="10" cy="10" r="2.6"></circle><path d="M10 2.6v2M10 15.4v2M2.6 10h2M15.4 10h2M4.8 4.8l1.4 1.4M13.8 13.8l1.4 1.4M15.2 4.8l-1.4 1.4M6.2 13.8l-1.4 1.4"></path></svg>
+      <span style="flex:1;font-size:14px">{{ t.settings }}</span>
+      <span style="font-size:16px;color:rgba(233,233,237,.35)">›</span>
+    </div>
+    <div style="height:1px;background:rgba(233,233,237,.08);margin-inline-start:44px"></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:14px" onClick="{{ goNotif }}">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#b5abfc" stroke-width="1.5"><path d="M5 8a5 5 0 0 1 10 0c0 4 1.5 5 1.5 5h-13S5 12 5 8Z"></path><path d="M8.3 16a1.9 1.9 0 0 0 3.4 0"></path></svg>
+      <span style="flex:1;font-size:14px">{{ t.notifications }}</span>
+      <span class="tag tag-accent">3</span>
+    </div>
+    <div style="height:1px;background:rgba(233,233,237,.08);margin-inline-start:44px"></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:14px" onClick="{{ goLogin }}">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#b5abfc" stroke-width="1.5"><path d="M8 3H4.8A.8.8 0 0 0 4 3.8v12.4a.8.8 0 0 0 .8.8H8M12.5 6.5 16 10l-3.5 3.5M16 10H8"></path></svg>
+      <span style="flex:1;font-size:14px">{{ t.signOut }}</span>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;overflow:auto;padding:20px 18px 96px;animation:sb-fade .3s ease">
+  <div style="display:flex;align-items:center">
+    <button class="btn btn-secondary btn-icon" style="border-radius:11px;margin-inline-end:10px" onClick="{{ goProfile }}">
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M11.5 4 5.5 10l6 6"></path></svg>
+    </button>
+    <h4 style="margin:0;font-size:21px;font-weight:500">{{ t.settings }}</h4>
+  </div>
+
+  <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(233,233,237,.45);margin:20px 0 9px">{{ t.pairedStations }}</div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <sc-for list="{{ stations }}" as="s" hint-placeholder-count="3">
+      <div style="display:flex;align-items:center;gap:11px;padding:12px;border-radius:14px;background:#232532;border:1px solid rgba(233,233,237,.1)" onClick="{{ s.pick }}">
+        <div style="{{ s.dot }}"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:500;font-family:ui-monospace,Menlo,monospace">{{ s.name }}</div>
+          <div style="font-size:11px;color:rgba(233,233,237,.5);margin-top:2px">{{ s.meta }}</div>
+        </div>
+        <span class="tag" style="{{ s.tagStyle }}">{{ s.state }}</span>
+      </div>
+    </sc-for>
+  </div>
+  <button class="btn btn-primary btn-block" style="height:44px;border-radius:13px;margin-top:10px" onClick="{{ goScan }}">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 5V2.8A.8.8 0 0 1 2.8 2H5M11 2h2.2a.8.8 0 0 1 .8.8V5M14 11v2.2a.8.8 0 0 1-.8.8H11M5 14H2.8a.8.8 0 0 1-.8-.8V11"></path><path d="M2 8h12"></path></svg>
+    {{ t.pairNewPc }}</button>
+
+  <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(233,233,237,.45);margin:24px 0 9px">{{ t.scanning }}</div>
+  <div style="border-radius:16px;background:#232532;border:1px solid rgba(233,233,237,.1);overflow:hidden">
+    <sc-for list="{{ toggles }}" as="tg" hint-placeholder-count="4">
+      <div style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid rgba(233,233,237,.07)" onClick="{{ tg.flip }}">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13.5px">{{ tg.label }}</div>
+          <div style="font-size:11px;color:rgba(233,233,237,.45);margin-top:2px">{{ tg.hint }}</div>
+        </div>
+        <div style="{{ tg.trackStyle }}"><div style="{{ tg.knobStyle }}"></div></div>
+      </div>
+    </sc-for>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 14px">
+      <div style="flex:1"><div style="font-size:13.5px">{{ t.language }}</div></div>
+      <div style="display:flex;border:1px solid rgba(233,233,237,.16);border-radius:9px;overflow:hidden;font-size:11px">
+        <div style="{{ langEnStyle }}" onClick="{{ setEn }}">EN</div>
+        <div style="{{ langFaStyle }}" onClick="{{ setFa }}">فارسی</div>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showTabs }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset-inline:0;bottom:0;height:74px;background:linear-gradient(to top,#161826 62%,rgba(22,24,38,0));display:flex;align-items:center;justify-content:space-around;padding:0 8px 12px;z-index:5">
+  <div style="{{ tabHome }}" onClick="{{ goHome }}">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4v-5.5H9V20H5a1 1 0 0 1-1-1Z"></path></svg>
+    <span style="font-size:9.5px">{{ t.home }}</span>
+  </div>
+  <div style="{{ tabHistory }}" onClick="{{ goHistory }}">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.2"></circle><path d="M12 7v5.3l3.4 2"></path></svg>
+    <span style="font-size:9.5px">{{ t.history }}</span>
+  </div>
+  <div style="width:58px;height:58px;border-radius:20px;background:#9184d9;display:grid;place-items:center;box-shadow:0 8px 24px rgba(145,132,217,.35);margin-top:-18px;cursor:pointer" onClick="{{ goScan }}">
+    <svg width="26" height="26" viewBox="0 0 16 16" fill="none" stroke="#161826" stroke-width="1.5"><path d="M2 5V2.8A.8.8 0 0 1 2.8 2H5M11 2h2.2a.8.8 0 0 1 .8.8V5M14 11v2.2a.8.8 0 0 1-.8.8H11M5 14H2.8a.8.8 0 0 1-.8-.8V11"></path><path d="M2 8h12"></path></svg>
+  </div>
+  <div style="{{ tabSearch }}" onClick="{{ goSearch }}">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="6.6"></circle><path d="m16 16 4 4"></path></svg>
+    <span style="font-size:9.5px">{{ t.search }}</span>
+  </div>
+  <div style="{{ tabProfile }}" onClick="{{ goProfile }}">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8.4" r="3.6"></circle><path d="M4.8 20c1.2-3.9 3.9-5.6 7.2-5.6s6 1.7 7.2 5.6"></path></svg>
+    <span style="font-size:9.5px">{{ t.profile }}</span>
+  </div>
+</div>
+</sc-if>
+
+</div>
+</x-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:412,&quot;height&quot;:892},&quot;variant&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;focus&quot;,&quot;grid&quot;],&quot;default&quot;:&quot;focus&quot;,&quot;tsType&quot;:&quot;'focus' | 'grid'&quot;,&quot;section&quot;:&quot;Home layout&quot;}}">
+const STR = {
+  en: {
+    appName: 'ScanBridge', userName: 'Kian M.', greeting: 'Shift 2 · 14:20',
+    loginTitle: 'Sign in to your station.', loginBody: 'Your operator ID links every scan to you and to the PC you are paired with.',
+    operatorId: 'Operator ID', passcode: 'Passcode', show: 'Show', signIn: 'Sign in', or: 'or',
+    pairInstead: 'Pair by scanning a PC code', loginFoot: 'Works offline · queues until the PC is back',
+    skip: 'Skip', continue: 'Continue',
+    onbTitle: 'Scan here. It lands on the PC.', onbBody: 'Scan the code taped to any workstation to pair with it. From then on every barcode you read is typed straight into whatever field is focused on that PC.',
+    connectedTo: 'Connected to', stationMeta: 'Packing line B · 192.168.1.24', switchPc: 'Switch',
+    tapToScan: 'Tap to scan', tapToScanSub: 'Or press the volume key on your handset',
+    scansToday: 'Scans today', queued: 'Queued', latency: 'Latency', delivered: 'Delivered',
+    stations: 'Stations', manage: 'Manage', recentScans: 'Recent scans', seeAll: 'See all',
+    scanHint: 'Hold the barcode inside the frame — it sends the moment it reads',
+    sentTitle: 'Sent to DESK-07', sentSub: 'Typed into the focused field', payload: 'Payload',
+    viewHistory: 'History', scanNext: 'Scan next',
+    search: 'Search', allTypes: 'All types', today: 'Today', resultsCount: '4 results',
+    history: 'History', export: 'Export CSV', all: 'All', sent: 'Sent', failed: 'Failed',
+    notifications: 'Notifications', markAll: 'Mark all read',
+    profile: 'Profile', settings: 'Settings', home: 'Home',
+    warehouseB: 'Warehouse B', shiftActive: 'On shift', level3: 'Level 3 operator',
+    totalScans: 'Total scans', pairedPcs: 'Paired PCs', signOut: 'Sign out',
+    pairedStations: 'Paired stations', pairNewPc: 'Pair a new PC', scanning: 'Scanning', language: 'Language',
+  },
+  fa: {
+    appName: 'اسکن‌بریج', userName: 'کیان م.', greeting: 'شیفت ۲ · ۱۴:۲۰',
+    loginTitle: 'به ایستگاه کاری‌ات وارد شو.', loginBody: 'شناسهٔ اپراتور هر اسکن را به تو و به سیستمی که به آن وصل شده‌ای گره می‌زند.',
+    operatorId: 'شناسهٔ اپراتور', passcode: 'رمز عبور', show: 'نمایش', signIn: 'ورود', or: 'یا',
+    pairInstead: 'اتصال با اسکن کد سیستم', loginFoot: 'آفلاین کار می‌کند · تا بازگشت سیستم در صف می‌ماند',
+    skip: 'رد کردن', continue: 'ادامه',
+    onbTitle: 'اینجا اسکن کن. روی کامپیوتر می‌نشیند.', onbBody: 'کد چسبانده‌شده روی هر ایستگاه کاری را اسکن کن تا به آن وصل شوی. از آن به بعد هر بارکدی که می‌خوانی مستقیم داخل فیلد فعال همان کامپیوتر تایپ می‌شود.',
+    connectedTo: 'متصل به', stationMeta: 'خط بسته‌بندی B · ۱۹۲.۱۶۸.۱.۲۴', switchPc: 'تعویض',
+    tapToScan: 'برای اسکن بزن', tapToScanSub: 'یا کلید صدای گوشی را فشار بده',
+    scansToday: 'اسکن امروز', queued: 'در صف', latency: 'تأخیر', delivered: 'تحویل‌شده',
+    stations: 'ایستگاه‌ها', manage: 'مدیریت', recentScans: 'اسکن‌های اخیر', seeAll: 'همه',
+    scanHint: 'بارکد را داخل کادر نگه دار — به‌محض خوانده‌شدن ارسال می‌شود',
+    sentTitle: 'ارسال شد به DESK-07', sentSub: 'در فیلد فعال تایپ شد', payload: 'داده',
+    viewHistory: 'تاریخچه', scanNext: 'اسکن بعدی',
+    search: 'جستجو', allTypes: 'همهٔ انواع', today: 'امروز', resultsCount: '۴ نتیجه',
+    history: 'تاریخچه', export: 'خروجی CSV', all: 'همه', sent: 'ارسال‌شده', failed: 'ناموفق',
+    notifications: 'اعلان‌ها', markAll: 'خوانده شد',
+    profile: 'پروفایل', settings: 'تنظیمات', home: 'خانه',
+    warehouseB: 'انبار B', shiftActive: 'در شیفت', level3: 'اپراتور سطح ۳',
+    totalScans: 'کل اسکن‌ها', pairedPcs: 'سیستم‌های متصل', signOut: 'خروج',
+    pairedStations: 'ایستگاه‌های متصل', pairNewPc: 'اتصال سیستم جدید', scanning: 'اسکن', language: 'زبان',
+  },
+};
+
+const DATA = {
+  en: {
+    recents: [
+      { kind: 'EAN', title: 'Ridgeline Crate 40L', code: '8412 9930 0771', time: '14:18', status: 'Sent' },
+      { kind: 'QR', title: 'Pallet manifest A/12', code: 'PLT-A12-0934', time: '14:16', status: 'Sent' },
+      { kind: 'CODE', title: 'Shelf tag · Aisle 4', code: 'SHF-04-118', time: '14:11', status: 'Queued' },
+      { kind: 'EAN', title: 'Thermal roll 80mm', code: '2290 4471 0028', time: '14:04', status: 'Sent' },
+    ],
+    results: [
+      { kind: 'EAN', title: 'Ridgeline Crate 40L', code: '8412 9930 0771', time: '14:18' },
+      { kind: 'EAN', title: 'Ridgeline Crate 25L', code: '8412 9930 0764', time: 'Yesterday' },
+      { kind: 'QR', title: 'Inbound batch 8412', code: 'INB-8412-B', time: 'Yesterday' },
+      { kind: 'EAN', title: 'Strap tensioner', code: '8412 1180 3390', time: 'Mon' },
+    ],
+    groups: [
+      { day: 'Today', count: '248 scans', rows: [
+        { kind: 'EAN', title: 'Ridgeline Crate 40L', code: '8412…0771', time: '14:18', pc: 'DESK-07', status: 'Sent' },
+        { kind: 'QR', title: 'Pallet manifest A/12', code: 'PLT-A12', time: '14:16', pc: 'DESK-07', status: 'Sent' },
+        { kind: 'CODE', title: 'Shelf tag · Aisle 4', code: 'SHF-04-118', time: '14:11', pc: 'DESK-07', status: 'Queued' },
+      ] },
+      { day: 'Yesterday', count: '312 scans', rows: [
+        { kind: 'EAN', title: 'Thermal roll 80mm', code: '2290…0028', time: '17:52', pc: 'DESK-03', status: 'Sent' },
+        { kind: 'QR', title: 'Return label R-8890', code: 'RET-8890', time: '17:40', pc: 'DESK-03', status: 'Failed' },
+      ] },
+    ],
+    notifs: [
+      { title: 'DESK-03 went offline', body: '3 scans are queued and will send as soon as it is back.', time: '12 min ago', unread: true },
+      { title: 'Paired with DESK-07', body: 'Packing line B · scans now type into the focused field.', time: '2 h ago', unread: true },
+      { title: 'Daily target reached', body: '248 of 240 scans logged on this shift.', time: '3 h ago', unread: true },
+      { title: 'Desktop agent updated', body: 'Version 2.4 — faster keystroke delivery on Windows.', time: 'Yesterday', unread: false },
+    ],
+    stations: [
+      { name: 'DESK-07', meta: 'Packing line B', state: 'Live' },
+      { name: 'DESK-03', meta: 'Receiving dock', state: 'Offline' },
+      { name: 'DESK-11', meta: 'Returns desk', state: 'Idle' },
+    ],
+    modes: ['Barcode', 'QR', 'Batch'],
+    toggles: [
+      { label: 'Continuous scan', hint: 'Keep reading without tapping again', on: true },
+      { label: 'Beep on read', hint: 'Audible confirmation per scan', on: true },
+      { label: 'Add Enter key', hint: 'Submit the field after each code', on: true },
+      { label: 'Vibrate on failure', hint: 'Only when delivery does not land', on: false },
+    ],
+  },
+  fa: {
+    recents: [
+      { kind: 'EAN', title: 'جعبهٔ ریج‌لاین ۴۰ لیتری', code: '8412 9930 0771', time: '۱۴:۱۸', status: 'ارسال‌شده' },
+      { kind: 'QR', title: 'مانیفست پالت A/12', code: 'PLT-A12-0934', time: '۱۴:۱۶', status: 'ارسال‌شده' },
+      { kind: 'CODE', title: 'برچسب قفسه · راهرو ۴', code: 'SHF-04-118', time: '۱۴:۱۱', status: 'در صف' },
+      { kind: 'EAN', title: 'رول حرارتی ۸۰ میلی‌متر', code: '2290 4471 0028', time: '۱۴:۰۴', status: 'ارسال‌شده' },
+    ],
+    results: [
+      { kind: 'EAN', title: 'جعبهٔ ریج‌لاین ۴۰ لیتری', code: '8412 9930 0771', time: '۱۴:۱۸' },
+      { kind: 'EAN', title: 'جعبهٔ ریج‌لاین ۲۵ لیتری', code: '8412 9930 0764', time: 'دیروز' },
+      { kind: 'QR', title: 'بچ ورودی ۸۴۱۲', code: 'INB-8412-B', time: 'دیروز' },
+      { kind: 'EAN', title: 'کشندهٔ تسمه', code: '8412 1180 3390', time: 'دوشنبه' },
+    ],
+    groups: [
+      { day: 'امروز', count: '۲۴۸ اسکن', rows: [
+        { kind: 'EAN', title: 'جعبهٔ ریج‌لاین ۴۰ لیتری', code: '8412…0771', time: '۱۴:۱۸', pc: 'DESK-07', status: 'ارسال‌شده' },
+        { kind: 'QR', title: 'مانیفست پالت A/12', code: 'PLT-A12', time: '۱۴:۱۶', pc: 'DESK-07', status: 'ارسال‌شده' },
+        { kind: 'CODE', title: 'برچسب قفسه · راهرو ۴', code: 'SHF-04-118', time: '۱۴:۱۱', pc: 'DESK-07', status: 'در صف' },
+      ] },
+      { day: 'دیروز', count: '۳۱۲ اسکن', rows: [
+        { kind: 'EAN', title: 'رول حرارتی ۸۰ میلی‌متر', code: '2290…0028', time: '۱۷:۵۲', pc: 'DESK-03', status: 'ارسال‌شده' },
+        { kind: 'QR', title: 'برچسب مرجوعی R-8890', code: 'RET-8890', time: '۱۷:۴۰', pc: 'DESK-03', status: 'ناموفق' },
+      ] },
+    ],
+    notifs: [
+      { title: 'DESK-03 آفلاین شد', body: '۳ اسکن در صف است و به‌محض بازگشت ارسال می‌شود.', time: '۱۲ دقیقه پیش', unread: true },
+      { title: 'به DESK-07 وصل شدی', body: 'خط بسته‌بندی B · اسکن‌ها در فیلد فعال تایپ می‌شوند.', time: '۲ ساعت پیش', unread: true },
+      { title: 'هدف روزانه محقق شد', body: '۲۴۸ از ۲۴۰ اسکن در این شیفت ثبت شد.', time: '۳ ساعت پیش', unread: true },
+      { title: 'به‌روزرسانی برنامهٔ دسکتاپ', body: 'نسخهٔ ۲.۴ — ارسال سریع‌تر کلیدها روی ویندوز.', time: 'دیروز', unread: false },
+    ],
+    stations: [
+      { name: 'DESK-07', meta: 'خط بسته‌بندی B', state: 'فعال' },
+      { name: 'DESK-03', meta: 'اسکلهٔ دریافت', state: 'آفلاین' },
+      { name: 'DESK-11', meta: 'میز مرجوعی', state: 'بی‌کار' },
+    ],
+    modes: ['بارکد', 'QR', 'دسته‌ای'],
+    toggles: [
+      { label: 'اسکن پیوسته', hint: 'بدون زدن دوباره ادامه بده', on: true },
+      { label: 'بوق هنگام خواندن', hint: 'تأیید صوتی برای هر اسکن', on: true },
+      { label: 'افزودن کلید Enter', hint: 'بعد از هر کد فیلد را ثبت کن', on: true },
+      { label: 'لرزش هنگام خطا', hint: 'فقط وقتی ارسال نرسد', on: false },
+    ],
+  },
+};
+
+const TAG = {
+  ok: 'background:#423a6a;color:#f5f4ff',
+  wait: 'border:1px solid #9184d9;color:#d2cefd;background:transparent',
+  bad: 'background:#3f424d;color:#e4e7f5',
+};
+
+class Component extends DCLogic {
+  state = { screen: 'login', lang: 'en', mode: 0, sheet: false, station: 0, flips: {} };
+
+  set(k, v) { this.setState({ [k]: v }); }
+  go = (s) => () => this.setState({ screen: s, sheet: false });
+
+  renderVals() {
+    const lang = this.state.lang;
+    const t = STR[lang];
+    const d = DATA[lang];
+    const s = this.state.screen;
+    const rtl = lang === 'fa';
+    const variant = this.props.variant || 'focus';
+
+    const langPill = (active) =>
+      'padding:5px 9px;cursor:pointer;' +
+      (active ? 'background:#423a6a;color:#f5f4ff' : 'color:rgba(233,233,237,.55)');
+
+    const tab = (name) => {
+      const on = s === name;
+      return 'display:flex;flex-direction:column;align-items:center;gap:4px;width:56px;cursor:pointer;' +
+        (on ? 'color:#b5abfc' : 'color:rgba(233,233,237,.45)');
+    };
+
+    const statusTag = (st) => {
+      if (st === 'Queued' || st === 'در صف') return TAG.wait;
+      if (st === 'Failed' || st === 'ناموفق') return TAG.bad;
+      return TAG.ok;
+    };
+
+    return {
+      t,
+      dir: rtl ? 'rtl' : 'ltr',
+      rootStyle: 'height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden;background:#161826;color:#e9e9ed;font-family:' +
+        (rtl ? 'Vazirmatn, Inter, system-ui, sans-serif' : 'Inter, system-ui, sans-serif'),
+
+      isLogin: s === 'login', isOnboard: s === 'onboard', isHome: s === 'home',
+      isScan: s === 'scan', isSearch: s === 'search', isHistory: s === 'history',
+      isNotif: s === 'notif', isProfile: s === 'profile', isSettings: s === 'settings',
+      showTabs: ['home', 'search', 'history', 'profile', 'settings', 'notif'].indexOf(s) >= 0,
+      isFocus: variant !== 'grid', isGrid: variant === 'grid',
+
+      goLogin: this.go('login'), goOnboard: this.go('onboard'), goHome: this.go('home'),
+      goScan: this.go('scan'), goSearch: this.go('search'), goHistory: this.go('history'),
+      goNotif: this.go('notif'), goProfile: this.go('profile'), goSettings: this.go('settings'),
+
+      setEn: () => this.set('lang', 'en'),
+      setFa: () => this.set('lang', 'fa'),
+      langEnStyle: langPill(lang === 'en'),
+      langFaStyle: langPill(lang === 'fa'),
+
+      tabHome: tab('home'), tabHistory: tab('history'), tabSearch: tab('search'), tabProfile: tab('profile'),
+
+      capture: () => this.setState({ sheet: true }),
+      closeSheet: () => this.setState({ sheet: false }),
+      showSheet: this.state.sheet,
+
+      modes: d.modes.map((label, i) => ({
+        label,
+        pick: () => this.set('mode', i),
+        style: 'padding:8px 16px;border-radius:999px;font-size:12.5px;cursor:pointer;white-space:nowrap;' +
+          (i === this.state.mode
+            ? 'background:#9184d9;color:#161826;font-weight:500'
+            : 'background:rgba(22,24,38,.7);color:rgba(233,233,237,.7);border:1px solid rgba(233,233,237,.14)'),
+      })),
+
+      recents: d.recents.map(r => ({ ...r, tagStyle: statusTag(r.status) })),
+      results: d.results,
+      historyGroups: d.groups.map(g => ({
+        day: g.day, count: g.count,
+        rows: g.rows.map(r => ({ ...r, tagStyle: statusTag(r.status) })),
+      })),
+
+      notifs: d.notifs.map(n => ({
+        title: n.title, body: n.body, time: n.time,
+        style: 'display:flex;gap:11px;padding:13px;border-radius:14px;background:#232532;border:1px solid ' +
+          (n.unread ? 'rgba(145,132,217,.3)' : 'rgba(233,233,237,.08)'),
+        iconStyle: 'width:26px;height:26px;border-radius:9px;flex:none;display:grid;place-items:center;margin-top:2px;' +
+          (n.unread ? 'background:#2b2741;color:#b5abfc' : 'background:#161826;color:#595d6c'),
+      })),
+
+      stations: d.stations.map((st, i) => {
+        const live = i === 0;
+        const off = st.state === 'Offline' || st.state === 'آفلاین';
+        return {
+          name: st.name, meta: st.meta, state: st.state,
+          pick: () => this.set('station', i),
+          dot: 'width:9px;height:9px;border-radius:50%;flex:none;background:' +
+            (off ? '#595d6c' : live ? '#b5abfc' : '#75798c') +
+            (live ? ';box-shadow:0 0 10px 2px rgba(181,171,252,.6)' : ''),
+          tagStyle: live ? TAG.ok : TAG.bad,
+          style: 'min-width:142px;padding:12px;border-radius:14px;background:#232532;cursor:pointer;border:1px solid ' +
+            (i === this.state.station ? 'rgba(145,132,217,.45)' : 'rgba(233,233,237,.1)'),
+        };
+      }),
+
+      toggles: d.toggles.map((tg, i) => {
+        const on = this.state.flips[i] === undefined ? tg.on : this.state.flips[i];
+        return {
+          label: tg.label, hint: tg.hint,
+          flip: () => this.setState(st => ({ flips: { ...st.flips, [i]: !on } })),
+          trackStyle: 'width:42px;height:24px;border-radius:999px;flex:none;padding:3px;cursor:pointer;display:flex;transition:background .18s;' +
+            'justify-content:' + (on ? 'flex-end' : 'flex-start') + ';' +
+            'background:' + (on ? '#9184d9' : '#3f424d'),
+          knobStyle: 'width:18px;height:18px;border-radius:50%;background:' + (on ? '#161826' : '#9397ab'),
+        };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>

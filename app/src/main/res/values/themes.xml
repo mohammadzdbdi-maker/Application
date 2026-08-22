@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.ScanBridge" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <!-- اپ حالا همیشه روشنه (نه دیگه وابسته به تنظیم شب/روز گوشی)، پس آیکون‌های نوار
+             وضعیت/ناوبری (ساعت، باتری، وای‌فای) هم باید همیشه تیره باشن تا روی پس‌زمینه‌ی
+             سفید/روشن اپ دیده بشن - وگرنه روی بعضی گوشی‌ها که تم سیستم تیره‌ست، این آیکون‌ها
+             سفید می‌موندن و روی زمینه‌ی روشنِ اپ گم می‌شدن. -->
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#FFFFFF</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.ScanBridge</item>
+    </style>
+</resources>
