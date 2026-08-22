@@ -64,6 +64,9 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import android.net.VpnService
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -136,6 +139,8 @@ class Strings(val lang: AppLanguage) {
     val history = if (lang == AppLanguage.FA) "تاریخچه اسکن‌ها" else "Scan History"
     val switchSystem = if (lang == AppLanguage.FA) "تغییر سیستم" else "Switch System"
     val userPanel = if (lang == AppLanguage.FA) "پنل کاربری" else "Profile"
+    val pharmacyMode = if (lang == AppLanguage.FA) "حالت داروخانه (فقط شبکه محلی)" else "Pharmacy Mode (LAN only)"
+    val pharmacyModeDesc = if (lang == AppLanguage.FA) "اینترنت گوشی به‌کلی قطع می‌شود؛ فقط ارتباط با سیستم روی شبکه داروخانه باز می‌ماند" else "Cuts the phone's internet completely; only the connection to your system on the pharmacy network stays alive"
     val scanTab = if (lang == AppLanguage.FA) "اسکن" else "Scan"
     val exitApp = if (lang == AppLanguage.FA) "خروج از برنامه" else "Exit App"
     val greetingHello = if (lang == AppLanguage.FA) "سلام 👋" else "Hello 👋"
@@ -2665,6 +2670,66 @@ fun UserPanelScreen(
                 selected = if (currentLanguage == AppLanguage.FA) "فارسی" else "English",
                 onSelect = { label -> onLanguageChange(if (label == "فارسی") AppLanguage.FA else AppLanguage.EN) }
             )
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // حالت داروخانه (فقط شبکه محلی) — قطع کامل اینترنت گوشی با VPN محلی، بدون روت
+        var lanOnlyChecked by remember { mutableStateOf(LanOnlyVpnService.isRunning(context)) }
+        val vpnConsentLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == android.app.Activity.RESULT_OK) {
+                LanOnlyVpnService.start(context)
+                lanOnlyChecked = true
+            }
+        }
+        // اگر کاربر از تنظیمات سریع اندروید VPN را خاموش کرد، وضعیت کلید هم به‌روز شود
+        LaunchedEffect(Unit) {
+            while (true) {
+                kotlinx.coroutines.delay(2000)
+                lanOnlyChecked = LanOnlyVpnService.isRunning(context)
+            }
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(NocturneSurface, RoundedCornerShape(14.dp))
+                .padding(16.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.size(36.dp).background(NocturneAccentTint, RoundedCornerShape(10.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.WifiOff, contentDescription = null, tint = NocturneAccentLight, modifier = Modifier.size(18.dp))
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(s.pharmacyMode, style = MaterialTheme.typography.titleSmall, color = NocturneText)
+                    Text(
+                        s.pharmacyModeDesc,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = NocturneTextMuted
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+                Switch(
+                    checked = lanOnlyChecked,
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            val prepareIntent = VpnService.prepare(context)
+                            if (prepareIntent != null) {
+                                vpnConsentLauncher.launch(prepareIntent)
+                            } else {
+                                LanOnlyVpnService.start(context)
+                                lanOnlyChecked = true
+                            }
+                        } else {
+                            LanOnlyVpnService.stop(context)
+                            lanOnlyChecked = false
+                        }
+                    }
+                )
+            }
         }
 
         Spacer(Modifier.height(16.dp))
