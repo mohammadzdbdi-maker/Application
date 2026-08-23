@@ -216,10 +216,10 @@ class Strings(val lang: AppLanguage) {
     val guideTitle = if (lang == AppLanguage.FA) "راهنمای کامل برنامه" else "Complete Guide"
     val guideSubtitle = if (lang == AppLanguage.FA) "توضیح همه‌ی بخش‌های برنامه، قدم‌به‌قدم" else "Every section explained, step by step"
     val guideScreenshotSoon = if (lang == AppLanguage.FA) "📸 اسکرین‌شات این بخش به‌زودی اضافه می‌شود" else "📸 Screenshot coming soon"
-    val usbConnect = if (lang == AppLanguage.FA) "اتصال USB (با کابل)" else "USB Connection (cable)"
-    val usbConnectDesc = if (lang == AppLanguage.FA) "گوشی را با کابل به سیستم وصل کنید و USB Tethering را روشن کنید" else "Plug the phone into the computer and enable USB Tethering"
-    val usbSearching = if (lang == AppLanguage.FA) "در حال جست‌وجوی سیستم روی شبکه‌ی USB..." else "Searching for the system over the USB network..."
-    val usbNotFound = if (lang == AppLanguage.FA) "سیستمی روی شبکه‌ی USB پیدا نشد.\n۱) کابل را وصل کنید\n۲) در تنظیمات گوشی «اتصال مودم USB / USB Tethering» را روشن کنید\n۳) نرم‌افزار روی ویندوز باز باشد" else "No system found on the USB network.\n1) Plug the cable in\n2) Enable USB Tethering in phone settings\n3) Make sure the Windows app is running"
+    val usbConnect = if (lang == AppLanguage.FA) "اتصال با کابل یا بلوتوث" else "Connect via Cable or Bluetooth"
+    val usbConnectDesc = if (lang == AppLanguage.FA) "با کابل (USB Tethering) یا بلوتوث (Bluetooth Tethering) وصل شوید" else "Connect using a cable (USB Tethering) or Bluetooth (Bluetooth Tethering)"
+    val usbSearching = if (lang == AppLanguage.FA) "در حال جست‌وجوی سیستم... (اسکن شبکه و شنیدن اعلام حضور تا ۱۵ ثانیه)" else "Searching for the system... (network scan + listening for announcements up to 15s)"
+    val usbNotFound = if (lang == AppLanguage.FA) "سیستم پیدا نشد.\n\u2022 کابل: کابل را وصل کنید و در تنظیمات گوشی «USB Tethering / اتصال مودم USB» را روشن کنید\n\u2022 بلوتوث: گوشی و سیستم را جفت کنید و «Bluetooth Tethering» را روشن کنید\n\u2022 نرم‌افزار ویندوز باید باز باشد (نسخه 2.1 به بالا)" else "System not found.\n\u2022 Cable: plug in and enable USB Tethering in phone settings\n\u2022 Bluetooth: pair with the computer and enable Bluetooth Tethering\n\u2022 The Windows app must be running (v2.1+)"
     val usbOpenTether = if (lang == AppLanguage.FA) "باز کردن تنظیمات Tethering" else "Open Tethering settings"
     val usbConnectedTo = if (lang == AppLanguage.FA) "اتصال USB برقرار شد ✓ حالا از تب اسکن استفاده کنید" else "USB connected ✓ Now use the Scan tab"
     val usbTryAgain = if (lang == AppLanguage.FA) "تلاش مجدد" else "Try again"
@@ -2614,7 +2614,10 @@ private fun findSystemOnUsbNetwork(): String? {
         while (ifaces.hasMoreElements()) {
             val iface = ifaces.nextElement() as java.net.NetworkInterface
             if (!iface.isUp) continue
-            if (!iface.name.lowercase().contains("usb")) continue
+            val n = iface.name.lowercase()
+            // شبکه‌های تترینگ: USB (usb0) و بلوتوث (bt-pan / pan0)
+            val isTether = n.contains("usb") || n.contains("bt-pan") || n == "pan0" || n == "pan1"
+            if (!isTether) continue
             val addrs = iface.inetAddresses
             while (addrs.hasMoreElements()) {
                 val a = addrs.nextElement()
@@ -2643,6 +2646,60 @@ private fun findSystemOnUsbNetwork(): String? {
     }
 }
 
+// شنیدن اعلام حضور سیستم روی UDP 45059 — سیستمِ ویندوز هر ~۱۵ ثانیه روی همه‌ی کارت‌های
+// شبکه broadcast می‌کند. چون این بسته «خروجی» از سیستم است، فایروال ویندوز نمی‌تواند آن را
+// بلاک کند؛ آدرس فرستنده‌ی بسته همان IP سیستم روی همین لینک (کابل یا بلوتوث) است.
+private fun listenForAnnounce(timeoutMs: Int): String? {
+    var socket: java.net.DatagramSocket? = null
+    return try {
+        socket = java.net.DatagramSocket(45059)
+        socket.broadcast = true
+        socket.soTimeout = timeoutMs
+        val deadline = System.currentTimeMillis() + timeoutMs
+        val buf = ByteArray(2048)
+        while (System.currentTimeMillis() < deadline) {
+            val packet = java.net.DatagramPacket(buf, buf.size)
+            socket.receive(packet)
+            val json = String(packet.data, 0, packet.length, Charsets.UTF_8)
+            if (json.contains("SCANBRIDGE_PEER_ANNOUNCE")) {
+                return packet.address.hostAddress
+            }
+        }
+        null
+    } catch (e: Exception) {
+        null
+    } finally {
+        try { socket?.close() } catch (e: Exception) { }
+    }
+}
+
+// فهرست شبکه‌های تترینگ فعال روی گوشی (برای نمایش در پیام خطا و عیب‌یابی)
+private fun getTetherNetworksInfo(): String {
+    return try {
+        val names = StringBuilder()
+        val ifaces = java.net.NetworkInterface.getNetworkInterfaces()
+        while (ifaces.hasMoreElements()) {
+            val iface = ifaces.nextElement() as java.net.NetworkInterface
+            if (!iface.isUp) continue
+            val n = iface.name.lowercase()
+            val isTether = n.contains("usb") || n.contains("bt-pan") || n == "pan0" || n == "pan1"
+            if (!isTether) continue
+            val addrs = iface.inetAddresses
+            while (addrs.hasMoreElements()) {
+                val a = addrs.nextElement()
+                if (a is java.net.Inet4Address && !a.isLoopbackAddress) {
+                    if (names.isNotEmpty()) names.append(", ")
+                    names.append(iface.name).append("=").append(a.hostAddress)
+                    break
+                }
+            }
+        }
+        names.toString()
+    } catch (e: Exception) {
+        ""
+    }
+}
+
 @Composable
 private fun UsbConnectDialog(
     s: Strings,
@@ -2654,10 +2711,16 @@ private fun UsbConnectDialog(
     var foundIp by remember { mutableStateOf("") }
     var attempt by remember { mutableIntStateOf(0) }
 
+    var netInfo by remember { mutableStateOf("") }
     LaunchedEffect(attempt) {
         phase = "searching"
+        netInfo = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { getTetherNetworksInfo() }
         val ip = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            findSystemOnUsbNetwork()
+            // دو مسیر موازی: (۱) اسکن سریع ساب‌نت تترینگ روی پورت 5050
+            //                (۲) شنیدن اعلام حضور UDP (تا 16 ثانیه) — ضد فایروال
+            val scan = kotlinx.coroutines.async { findSystemOnUsbNetwork() }
+            val listen = kotlinx.coroutines.async { listenForAnnounce(16000) }
+            scan.await() ?: listen.await()
         }
         if (ip != null) {
             foundIp = ip
@@ -2720,6 +2783,13 @@ private fun UsbConnectDialog(
                 }
                 else -> {
                     Text(s.usbNotFound, style = MaterialTheme.typography.bodySmall, color = NocturneTextMuted, modifier = Modifier.fillMaxWidth())
+                    if (netInfo.isNotEmpty()) {
+                        Spacer(Modifier.height(6.dp))
+                        Text("شبکه‌های فعال: " + netInfo, style = MaterialTheme.typography.labelSmall, color = NocturneAccentPale, modifier = Modifier.fillMaxWidth())
+                    } else {
+                        Spacer(Modifier.height(6.dp))
+                        Text("هیچ شبکه‌ی کابل/بلوتوثی روی گوشی فعال نیست — Tethering را روشن کنید", style = MaterialTheme.typography.labelSmall, color = ErrorRed, modifier = Modifier.fillMaxWidth())
+                    }
                     Spacer(Modifier.height(14.dp))
                     Row {
                         Box(
