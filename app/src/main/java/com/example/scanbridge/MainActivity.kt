@@ -2716,11 +2716,10 @@ private fun UsbConnectDialog(
         phase = "searching"
         netInfo = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { getTetherNetworksInfo() }
         val ip = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            // دو مسیر موازی: (۱) اسکن سریع ساب‌نت تترینگ روی پورت 5050
-            //                (۲) شنیدن اعلام حضور UDP (تا 16 ثانیه) — ضد فایروال
-            val scan = kotlinx.coroutines.async { findSystemOnUsbNetwork() }
-            val listen = kotlinx.coroutines.async { listenForAnnounce(16000) }
-            scan.await() ?: listen.await()
+            // اول اسکن سریع ساب‌نت تترینگ روی پورت 5050 (اگر فایروال اجازه بدهد همین‌جا پیدا می‌شود)
+            // و اگر پیدا نشد، تا 16 ثانیه به اعلام حضور UDP سیستم گوش می‌دهیم (ضد فایروال).
+            val scanned = findSystemOnUsbNetwork()
+            if (scanned != null) scanned else listenForAnnounce(16000)
         }
         if (ip != null) {
             foundIp = ip
