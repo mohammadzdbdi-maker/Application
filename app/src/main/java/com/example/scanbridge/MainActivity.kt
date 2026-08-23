@@ -2608,7 +2608,7 @@ private fun GuideScreenContent(s: Strings) {
     val sections = listOf(
         GuideSection(
             if (fa) "۱. اتصال به سیستم" else "1. Connect to System",
-            if (fa) "در تب اسکن، کارت «اتصال به سیستم» را بزنید و QR نمایش‌داده‌شده روی ویندوز را با دوربین گوشی اسکن کنید. گوشی باید در همان وای‌فای سیستم باشد." else "In the Scan tab, tap "Connect to System" and scan the QR code shown on Windows. The phone must be on the same Wi-Fi as the computer.",
+            if (fa) "در تب اسکن، کارت «اتصال به سیستم» را بزنید و QR نمایش‌داده‌شده روی ویندوز را با دوربین گوشی اسکن کنید. گوشی باید در همان وای‌فای سیستم باشد." else "In the Scan tab, tap «Connect to System» and scan the QR code shown on Windows. The phone must be on the same Wi-Fi as the computer.",
             Icons.Default.QrCode2
         ),
         GuideSection(
