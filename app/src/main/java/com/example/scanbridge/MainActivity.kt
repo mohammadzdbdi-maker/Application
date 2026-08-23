@@ -2547,8 +2547,6 @@ fun HistoryScreen(
                 onDismissTutorial = { onTutorialStepChange(TutorialStep.NONE) }
             )
         }
-
-        }
     }
     }
 }
@@ -2942,27 +2940,6 @@ fun UserPanelScreen(
     if (showEditNameDialog) {
         var editedName by remember { mutableStateOf(customComputerName) }
         NamingDialog(
-            value = editedName,
-            onValueChange = { editedName = it },
-            onConfirm = {
-                val computerId = sharedPrefs.getString("computer_id", null)
-                val editor = sharedPrefs.edit().putString("custom_computer_name", editedName)
-                if (computerId != null) {
-                    editor.putString("custom_name_$computerId", editedName)
-                }
-                editor.apply()
-                customComputerName = editedName
-                showEditNameDialog = false
-            },
-            onCancel = { showEditNameDialog = false },
-            title = s.editSystemName,
-            confirmLabel = s.confirm,
-            cancelLabel = s.cancel,
-            requireNonBlank = false
-        )
-    }
-}
-  NamingDialog(
             value = editedName,
             onValueChange = { editedName = it },
             onConfirm = {
