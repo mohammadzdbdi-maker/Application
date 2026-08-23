@@ -154,6 +154,8 @@ class Strings(val lang: AppLanguage) {
     val pairingInstruction = if (lang == AppLanguage.FA) "QR کد نمایش داده شده در ویندوز را اسکن کنید" else "Scan the QR code displayed on Windows"
     val startScan = if (lang == AppLanguage.FA) "شروع اسکن" else "Start Scanning"
     val connectToSystem = if (lang == AppLanguage.FA) "اتصال به سیستم" else "Connect to System"
+    val pairingViaWifi = if (lang == AppLanguage.FA) "وای‌فای" else "Wi-Fi"
+    val pairingViaUsb = if (lang == AppLanguage.FA) "اتصال با کابل USB" else "Connect via USB Cable"
     val notConnectedYet = if (lang == AppLanguage.FA) "هنوز به هیچ سیستمی وصل نیستی" else "Not connected to a system yet"
     val pairingErrorBrand = if (lang == AppLanguage.FA) "این QR کد مربوط به ScanBridge نیست" else "Not a ScanBridge QR code"
     val pairingErrorFormat = if (lang == AppLanguage.FA) "ساختار QR کد اشتباه است" else "Invalid QR format"
@@ -216,10 +218,10 @@ class Strings(val lang: AppLanguage) {
     val guideTitle = if (lang == AppLanguage.FA) "راهنمای کامل برنامه" else "Complete Guide"
     val guideSubtitle = if (lang == AppLanguage.FA) "توضیح همه‌ی بخش‌های برنامه، قدم‌به‌قدم" else "Every section explained, step by step"
     val guideScreenshotSoon = if (lang == AppLanguage.FA) "📸 اسکرین‌شات این بخش به‌زودی اضافه می‌شود" else "📸 Screenshot coming soon"
-    val usbConnect = if (lang == AppLanguage.FA) "اتصال با کابل یا بلوتوث" else "Connect via Cable or Bluetooth"
-    val usbConnectDesc = if (lang == AppLanguage.FA) "با کابل (USB Tethering) یا بلوتوث (Bluetooth Tethering) وصل شوید" else "Connect using a cable (USB Tethering) or Bluetooth (Bluetooth Tethering)"
+    val usbConnect = if (lang == AppLanguage.FA) "اتصال با کابل USB" else "Connect via USB Cable"
+    val usbConnectDesc = if (lang == AppLanguage.FA) "با کابل Type-C و USB Tethering وصل شوید" else "Connect using a Type-C cable and USB Tethering"
     val usbSearching = if (lang == AppLanguage.FA) "در حال جست‌وجوی سیستم... (اسکن شبکه و شنیدن اعلام حضور تا ۱۵ ثانیه)" else "Searching for the system... (network scan + listening for announcements up to 15s)"
-    val usbNotFound = if (lang == AppLanguage.FA) "سیستم پیدا نشد.\n\u2022 کابل: کابل را وصل کنید و در تنظیمات گوشی «USB Tethering / اتصال مودم USB» را روشن کنید\n\u2022 بلوتوث: گوشی و سیستم را جفت کنید و «Bluetooth Tethering» را روشن کنید\n\u2022 نرم‌افزار ویندوز باید باز باشد (نسخه 2.1 به بالا)" else "System not found.\n\u2022 Cable: plug in and enable USB Tethering in phone settings\n\u2022 Bluetooth: pair with the computer and enable Bluetooth Tethering\n\u2022 The Windows app must be running (v2.1+)"
+    val usbNotFound = if (lang == AppLanguage.FA) "سیستم پیدا نشد.\n\u2022 کابل را وصل کنید و در تنظیمات گوشی «USB Tethering / اتصال مودم USB» را روشن کنید\n\u2022 نرم‌افزار ویندوز باید باز باشد (نسخه 2.1 به بالا)" else "System not found.\n\u2022 Plug the cable in and enable USB Tethering in phone settings\n\u2022 The Windows app must be running (v2.1+)"
     val usbOpenTether = if (lang == AppLanguage.FA) "باز کردن تنظیمات Tethering" else "Open Tethering settings"
     val usbConnectedTo = if (lang == AppLanguage.FA) "اتصال USB برقرار شد ✓ حالا از تب اسکن استفاده کنید" else "USB connected ✓ Now use the Scan tab"
     val usbTryAgain = if (lang == AppLanguage.FA) "تلاش مجدد" else "Try again"
@@ -1854,6 +1856,7 @@ fun PairingScreen(
     val context = LocalContext.current
     val sharedPrefs = remember { context.getSharedPreferences("ScanBridgePrefs", Context.MODE_PRIVATE) }
     val haptic = LocalHapticFeedback.current
+    var showUsbDialog by remember { mutableStateOf(false) }
 
     var errorMsg by remember { mutableStateOf("") }
     val toneGenerator = remember { ToneGenerator(AudioManager.STREAM_MUSIC, 100) }
@@ -1919,11 +1922,28 @@ fun PairingScreen(
                 )
                 Spacer(Modifier.height(28.dp))
                 PrimaryButton(
-                    label = s.connectToSystem,
+                    label = s.connectToSystem + " (" + s.pairingViaWifi + ")",
                     onClick = { launcher.launch(Manifest.permission.CAMERA) },
                     icon = Icons.Default.QrCodeScanner
                 )
+                Spacer(Modifier.height(10.dp))
+                SecondaryButton(
+                    label = s.pairingViaUsb,
+                    onClick = { showUsbDialog = true },
+                    icon = Icons.Default.Usb
+                )
             }
+        }
+
+        if (showUsbDialog) {
+            UsbConnectDialog(
+                s = s,
+                onDismiss = { showUsbDialog = false },
+                onConnected = { ip ->
+                    sharedPrefs.edit().putString("server_url", "ws://" + ip + ":5050").apply()
+                    onPaired()
+                }
+            )
         }
         return
     }
@@ -2615,9 +2635,8 @@ private fun findSystemOnUsbNetwork(): String? {
             val iface = ifaces.nextElement() as java.net.NetworkInterface
             if (!iface.isUp) continue
             val n = iface.name.lowercase()
-            // شبکه‌های تترینگ: USB (usb0) و بلوتوث (bt-pan / pan0)
-            val isTether = n.contains("usb") || n.contains("bt-pan") || n == "pan0" || n == "pan1"
-            if (!isTether) continue
+            // شبکه‌ی تترینگ USB (usb0)
+            if (!n.contains("usb")) continue
             val addrs = iface.inetAddresses
             while (addrs.hasMoreElements()) {
                 val a = addrs.nextElement()
@@ -2682,8 +2701,7 @@ private fun getTetherNetworksInfo(): String {
             val iface = ifaces.nextElement() as java.net.NetworkInterface
             if (!iface.isUp) continue
             val n = iface.name.lowercase()
-            val isTether = n.contains("usb") || n.contains("bt-pan") || n == "pan0" || n == "pan1"
-            if (!isTether) continue
+            if (!n.contains("usb")) continue
             val addrs = iface.inetAddresses
             while (addrs.hasMoreElements()) {
                 val a = addrs.nextElement()
