@@ -220,7 +220,7 @@ class Strings(val lang: AppLanguage) {
     val guideScreenshotSoon = if (lang == AppLanguage.FA) "📸 اسکرین‌شات این بخش به‌زودی اضافه می‌شود" else "📸 Screenshot coming soon"
     val usbConnect = if (lang == AppLanguage.FA) "اتصال با کابل USB" else "Connect via USB Cable"
     val usbConnectDesc = if (lang == AppLanguage.FA) "با کابل Type-C و USB Tethering وصل شوید" else "Connect using a Type-C cable and USB Tethering"
-    val usbSearching = if (lang == AppLanguage.FA) "در حال جست‌وجوی سیستم... (اسکن شبکه و شنیدن اعلام حضور تا ۱۵ ثانیه)" else "Searching for the system... (network scan + listening for announcements up to 15s)"
+    val usbSearching = if (lang == AppLanguage.FA) "کابل را وصل کنید و USB Tethering را روشن کنید — به محض روشن شدن، خودکار وصل می‌شویم (۴۵ ثانیه صبر می‌کنیم)" else "Plug in the cable and enable USB Tethering — we connect automatically the moment it turns on (waiting up to 45s)"
     val usbNotFound = if (lang == AppLanguage.FA) "سیستم پیدا نشد.\n\u2022 کابل را وصل کنید و در تنظیمات گوشی «USB Tethering / اتصال مودم USB» را روشن کنید\n\u2022 نرم‌افزار ویندوز باید باز باشد (نسخه 2.1 به بالا)" else "System not found.\n\u2022 Plug the cable in and enable USB Tethering in phone settings\n\u2022 The Windows app must be running (v2.1+)"
     val usbOpenTether = if (lang == AppLanguage.FA) "باز کردن تنظیمات Tethering" else "Open Tethering settings"
     val usbConnectedTo = if (lang == AppLanguage.FA) "اتصال USB برقرار شد ✓ حالا از تب اسکن استفاده کنید" else "USB connected ✓ Now use the Scan tab"
@@ -2732,12 +2732,27 @@ private fun UsbConnectDialog(
     var netInfo by remember { mutableStateOf("") }
     LaunchedEffect(attempt) {
         phase = "searching"
-        netInfo = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { getTetherNetworksInfo() }
+        // اتصال کاملاً خودکار: تا ۴۵ ثانیه هر لحظه بررسی می‌کنیم — کاربر فقط کابل را وصل
+        // کرده و USB Tethering را روشن می‌کند؛ به محض روشن شدن شبکه‌ی USB (یا رسیدن اعلام
+        // حضور UDP)، بدون هیچ دکمه‌ی دیگری وصل می‌شویم. هر دور: اسکن سریع ساب‌نت + ۲.۵
+        // ثانیه شنیدن UDP (ضد فایروال).
         val ip = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            // اول اسکن سریع ساب‌نت تترینگ روی پورت 5050 (اگر فایروال اجازه بدهد همین‌جا پیدا می‌شود)
-            // و اگر پیدا نشد، تا 16 ثانیه به اعلام حضور UDP سیستم گوش می‌دهیم (ضد فایروال).
-            val scanned = findSystemOnUsbNetwork()
-            if (scanned != null) scanned else listenForAnnounce(16000)
+            val deadline = System.currentTimeMillis() + 45000
+            var result: String? = null
+            while (result == null && System.currentTimeMillis() < deadline) {
+                netInfo = getTetherNetworksInfo()
+                val scanned = findSystemOnUsbNetwork()
+                if (scanned != null) {
+                    result = scanned
+                    break
+                }
+                val heard = listenForAnnounce(2500)
+                if (heard != null) {
+                    result = heard
+                    break
+                }
+            }
+            result
         }
         if (ip != null) {
             foundIp = ip
@@ -2775,6 +2790,34 @@ private fun UsbConnectDialog(
                     CircularProgressIndicator(color = NocturneAccent, modifier = Modifier.size(28.dp).align(Alignment.CenterHorizontally))
                     Spacer(Modifier.height(10.dp))
                     Text(s.usbSearching, style = MaterialTheme.typography.bodySmall, color = NocturneTextMuted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        if (netInfo.isNotEmpty()) "شبکه‌های فعال: " + netInfo else "شبکه‌ی USB هنوز فعال نیست — USB Tethering را روشن کنید",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (netInfo.isNotEmpty()) NocturneAccentPale else ErrorRed,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(13.dp))
+                            .background(NocturneAccentTint)
+                            .clickable {
+                                try {
+                                    context.startActivity(android.content.Intent("android.settings.TETHER_SETTINGS"))
+                                } catch (e: Exception) {
+                                    try {
+                                        context.startActivity(android.content.Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS))
+                                    } catch (ex: Exception) { }
+                                }
+                            }
+                            .padding(vertical = 11.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(s.usbOpenTether, color = NocturneAccentPale, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                    }
                 }
                 "connected" -> {
                     Icon(Icons.Default.CheckCircle, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(34.dp).align(Alignment.CenterHorizontally))
