@@ -157,7 +157,7 @@ class Strings(val lang: AppLanguage) {
     val notConnectedYet = if (lang == AppLanguage.FA) "هنوز به هیچ سیستمی وصل نیستی" else "Not connected to a system yet"
     val pairingErrorBrand = if (lang == AppLanguage.FA) "این QR کد مربوط به ScanBridge نیست" else "Not a ScanBridge QR code"
     val pairingErrorFormat = if (lang == AppLanguage.FA) "ساختار QR کد اشتباه است" else "Invalid QR format"
-    val renameTitle = if (lang == AppLanguage.FA) "این سیستم را چه نامی می‌گذارید؟" else "Name this system"
+    val renameTitle = if (lang == AppLanguage.FA) "نام این سیستم رو چی میذاری؟" else "What will you call this system?"
     val confirm = if (lang == AppLanguage.FA) "تایید" else "Confirm"
     val okay = if (lang == AppLanguage.FA) "باشه" else "OK"
     val registerAgain = if (lang == AppLanguage.FA) "ثبت مجدد" else "Register Again"
@@ -212,6 +212,10 @@ class Strings(val lang: AppLanguage) {
     // Website & Messages
     val website = if (lang == AppLanguage.FA) "وب‌سایت" else "Website"
     val messages = if (lang == AppLanguage.FA) "پیام‌ها" else "Messages"
+    val guide = if (lang == AppLanguage.FA) "راهنما" else "Guide"
+    val guideTitle = if (lang == AppLanguage.FA) "راهنمای کامل برنامه" else "Complete Guide"
+    val guideSubtitle = if (lang == AppLanguage.FA) "توضیح همه‌ی بخش‌های برنامه، قدم‌به‌قدم" else "Every section explained, step by step"
+    val guideScreenshotSoon = if (lang == AppLanguage.FA) "📸 اسکرین‌شات این بخش به‌زودی اضافه می‌شود" else "📸 Screenshot coming soon"
     val newUpdateAvailable = if (lang == AppLanguage.FA) "نسخه‌ی جدید موجوده" else "New update available"
     val noNewMessages = if (lang == AppLanguage.FA) "پیام جدیدی نیست" else "No new messages"
     val updateNow = if (lang == AppLanguage.FA) "بروزرسانی" else "Update Now"
@@ -1743,12 +1747,26 @@ fun IntroScreen(s: Strings, onEnter: () -> Unit) {
                             CircleShape
                         )
                 )
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                    contentDescription = null,
-                    tint = Color.Unspecified,
-                    modifier = Modifier.size(220.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(172.dp)
+                        .graphicsLayer {
+                            shape = RoundedCornerShape(40.dp)
+                            clip = true
+                            shadowElevation = 22.dp.toPx()
+                            ambientShadowColor = NocturneAccent.copy(alpha = 0.35f)
+                            spotShadowColor = NocturneAccent.copy(alpha = 0.45f)
+                        }
+                        .background(Color.White, RoundedCornerShape(40.dp))
+                        .border(1.dp, NocturneAccent.copy(alpha = 0.15f), RoundedCornerShape(40.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo_3d),
+                        contentDescription = null,
+                        modifier = Modifier.size(132.dp)
+                    )
+                }
             }
         }
 
@@ -2141,16 +2159,21 @@ fun ScannerScreen(
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(NavyPrimary.copy(alpha = 0.1f)),
+                    .size(52.dp)
+                    .graphicsLayer {
+                        shape = RoundedCornerShape(16.dp)
+                        clip = true
+                        shadowElevation = 10.dp.toPx()
+                        ambientShadowColor = NocturneAccent.copy(alpha = 0.30f)
+                        spotShadowColor = NocturneAccent.copy(alpha = 0.40f)
+                    }
+                    .background(Color.White, RoundedCornerShape(16.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                Image(
+                    painter = painterResource(id = R.drawable.logo_3d),
                     contentDescription = null,
-                    tint = Color.Unspecified,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(38.dp)
                 )
             }
             Spacer(Modifier.width(12.dp))
@@ -2562,6 +2585,100 @@ data class UpdateMessage(
     val url: String
 )
 
+// صفحه‌ی راهنمای کامل برنامه — مشابه راهنمای سایت اما بومی و با جای اسکرین‌شات.
+// اسکرین‌شات‌ها بعداً به‌صورت فایل‌های guide_connect / guide_scan / ... در پوشه‌ی
+// drawable-nodpi اضافه می‌شوند؛ تا آن موقع جای هر کدام کادر «به‌زودی» نمایش داده می‌شود
+// (بدون نیاز به تغییر کد، چون با getIdentifier پویا پیدا می‌شوند).
+private data class GuideSection(
+    val title: String,
+    val description: String,
+    val drawableName: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector
+)
+
+@Composable
+private fun GuideScreenContent(s: Strings) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val sections = listOf(
+        GuideSection("۱. اتصال به سیستم", "در تب اسکن، کارت «اتصال به سیستم» را بزنید و QR نمایش‌داده‌شده روی ویندوز را با دوربین گوشی اسکن کنید. گوشی باید در همان وای‌فای سیستم باشد.", "guide_connect", Icons.Default.QrCode2),
+        GuideSection("۲. اسکن بارکد", "دوربین را روی بارکد بگیرید؛ ثبت خودکار انجام می‌شود، نتیجه در کارت «آخرین اسکن» می‌آید و برای سیستم فرستاده می‌شود.", "guide_scan", Icons.Default.CenterFocusStrong),
+        GuideSection("۳. چراغ‌غشو", "در محیط کم‌نور، آیکون فلاش کنار دوربین را بزنید تا نور روشن شود؛ دوباره بزنید خاموش می‌شود.", "guide_torch", Icons.Default.FlashlightOn),
+        GuideSection("۴. تاریخچه و ارسال مجدد", "تب «تاریخچه» همه‌ی اسکن‌ها را با ساعت و نوع نشان می‌دهد. با دکمه‌ی ارسال مجدد می‌توانید هر بارکد را دوباره برای سیستم بفرستید.", "guide_history", Icons.Default.History),
+        GuideSection("۵. پنل کاربری", "تغییر نام سیستم، تغییر زبان، بررسی بروزرسانی، پیام‌ها و همین راهنما — همه در تب «پنل کاربری» جمع شده‌اند.", "guide_panel", Icons.Default.Person),
+        GuideSection("۶. حالت داروخانه", "اینترنت گوشی را به‌کلی قطع می‌کند و فقط ارتباط با سیستم روی شبکه‌ی محلی باز می‌ماند — مناسب داروخانه‌هایی که نمی‌خواهند پرسنل اینترنت داشته باشند.", "guide_pharmacy", Icons.Default.WifiOff),
+        GuideSection("۷. تغییر سیستم و خروج", "با دکمه‌ی نارنجی بالا-چپِ تب اسکن، گوشی را به سیستم دیگری وصل کنید. دکمه‌ی قرمز کنارش هم از برنامه خارج می‌شود.", "guide_switch", Icons.Default.SwapHoriz),
+        GuideSection("۸. تغییر زبان", "از پنل کاربری، بخش «زبان»، بین فارسی و English انتخاب کنید — همه‌ی متن‌های برنامه همان لحظه عوض می‌شوند.", "guide_language", Icons.Default.Language)
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp)
+    ) {
+        sections.forEach { section ->
+            Spacer(Modifier.height(14.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        shape = RoundedCornerShape(20.dp)
+                        clip = true
+                        shadowElevation = 8.dp.toPx()
+                        ambientShadowColor = NocturneAccent.copy(alpha = 0.18f)
+                        spotShadowColor = NocturneAccent.copy(alpha = 0.28f)
+                    }
+                    .background(Color.White, RoundedCornerShape(20.dp))
+                    .padding(16.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Brush.linearGradient(listOf(GradientNavy, NocturneAccent))),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(section.icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Text(section.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = NocturneText)
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(section.description, style = MaterialTheme.typography.bodySmall, color = NocturneTextMuted)
+
+                Spacer(Modifier.height(12.dp))
+                val resId = remember(section.drawableName) {
+                    context.resources.getIdentifier(section.drawableName, "drawable", context.packageName)
+                }
+                if (resId != 0) {
+                    Image(
+                        painter = painterResource(id = resId),
+                        contentDescription = section.title,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .border(1.dp, NocturneDivider, RoundedCornerShape(14.dp))
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(NocturneAccentTint)
+                            .border(1.dp, NocturneDivider, RoundedCornerShape(14.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(s.guideScreenshotSoon, style = MaterialTheme.typography.bodySmall, color = NocturneAccentPale)
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(28.dp))
+    }
+}
+
 // صفحه‌ی «پنل کاربری» - همه‌چیزهایی که قبلاً توی دیالوگ تنظیمات و کارت‌های پراکنده‌ی صفحه‌ی
 // اسکنر بودن (تغییر نام سیستم، زبان، بروزرسانی) الان همگی اینجا جمع شدن. دکمه‌ی «تغییر سیستم»
 // و «خروج» طبق درخواست به بالای تب اسکن منتقل شدن.
@@ -2596,6 +2713,7 @@ fun UserPanelScreen(
 
     // --- بخش «پیام‌ها»: وقتی نسخه‌ی جدید روی سایت گذاشته بشه، اینجا نمایش داده می‌شه ---
     var showMessagesScreen by remember { mutableStateOf(false) }
+    var showGuideScreen by remember { mutableStateOf(false) }
     var updateMessage by remember { mutableStateOf<UpdateMessage?>(null) }
     var isLoadingMessages by remember { mutableStateOf(false) }
     val currentVersionName = remember {
@@ -2636,7 +2754,8 @@ fun UserPanelScreen(
     LaunchedEffect(Unit) { fetchUpdateMessage() }
 
     BackHandler {
-        if (showMessagesScreen) showMessagesScreen = false else onBack()
+        if (showGuideScreen) showGuideScreen = false
+        else if (showMessagesScreen) showMessagesScreen = false else onBack()
     }
 
     // این مرحله از آموزش (توضیح تنظیمات) به‌جای دیالوگ و اسکرین مسدودکننده، یه کارت راهنمای
@@ -2850,6 +2969,16 @@ fun UserPanelScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        // راهنمای کامل برنامه
+        SettingRow(
+            icon = Icons.Default.MenuBook,
+            title = s.guideTitle,
+            subtitle = s.guideSubtitle,
+            onClick = { showGuideScreen = true }
+        )
+
+        Spacer(Modifier.height(16.dp))
+
         // وبسایت
         SettingRow(
             icon = Icons.Default.Public,
@@ -2865,6 +2994,31 @@ fun UserPanelScreen(
         )
 
         Spacer(Modifier.height(24.dp))
+    }
+
+    // --- صفحه‌ی «راهنما» - کامل، اسکرول‌شونده، با جای اسکرین‌شات هر بخش ---
+    if (showGuideScreen) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { showGuideScreen = false }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = NocturneText)
+                }
+                Column {
+                    Text(s.guideTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = NocturneText)
+                    Text(s.guideSubtitle, style = MaterialTheme.typography.bodySmall, color = NocturneTextMuted)
+                }
+            }
+            GuideScreenContent(s = s)
+        }
     }
 
     // --- صفحه‌ی «پیام‌ها» - روی همین تب، به‌جای رفتن به یه مسیر جداگونه توی برنامه ---
