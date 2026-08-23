@@ -73,6 +73,10 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.asImageBitmap
@@ -1469,7 +1473,8 @@ fun TutorialCard(
     onNext: (() -> Unit)? = null,
     nextLabel: String = "بعدی",
     onSkip: (() -> Unit)? = null,
-    skipLabel: String = "فعلاً رد می‌کنم"
+    skipLabel: String = "فعلاً رد می‌کنم",
+    onDismissTutorial: (() -> Unit)? = null
 ) {
     // ورود نرم: کارت با کمی تأخیرِ محسوس از پایین بالا می‌آید و محو-به-واضح می‌شود.
     var entered by remember { mutableStateOf(false) }
@@ -1591,6 +1596,63 @@ fun TutorialCard(
             }
         }
     }
+}
+
+// --- اسکریم آموزش با افکت سوراخ‌نور (Spotlight) ---
+// کل صفحه تاریک می‌شود و فقط حول دکمه‌ای که در حال توضیح داده شدن است یک سوراخ شفاف با
+// حلقه‌ی نور آبی باقی می‌ماند — همان onboarding های مدرن. اگر anchorRect نباشد، کل صفحه
+// به‌طور یکنواخت تاریک می‌شود و کارت آموزش روی آن شناور می‌ماند.
+@Composable
+fun BoxScope.TutorialSpotlightScrim(
+    holeRect: Rect?,
+    blockTouches: Boolean = false
+) {
+    val interaction = remember { MutableInteractionSource() }
+    Box(
+        modifier = Modifier
+            .matchParentSize()
+            .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+            .drawWithContent {
+                drawContent()
+                drawRect(Color.Black.copy(alpha = 0.62f))
+                if (holeRect != null) {
+                    val pad = 12.dp.toPx()
+                    val topLeft = Offset(holeRect.left - pad, holeRect.top - pad)
+                    val holeSize = androidx.compose.ui.geometry.Size(
+                        holeRect.width + 2 * pad,
+                        holeRect.height + 2 * pad
+                    )
+                    val corner = CornerRadius(22.dp.toPx())
+                    // سوراخ شفاف داخل اسکریم
+                    drawRoundRect(
+                        color = Color.Black,
+                        topLeft = topLeft,
+                        size = holeSize,
+                        cornerRadius = corner,
+                        blendMode = BlendMode.Clear
+                    )
+                    // حلقه‌ی نور آبی دور سوراخ — چراغ‌قوه‌ی مجازی
+                    drawRoundRect(
+                        brush = Brush.linearGradient(
+                            colors = listOf(GradientNavy, NocturneAccent),
+                            start = topLeft,
+                            end = Offset(topLeft.x + holeSize.width, topLeft.y + holeSize.height)
+                        ),
+                        topLeft = topLeft,
+                        size = holeSize,
+                        cornerRadius = corner,
+                        style = Stroke(width = 3.dp.toPx())
+                    )
+                }
+            }
+            .then(
+                if (blockTouches) {
+                    Modifier.clickable(interactionSource = interaction, indication = null) {}
+                } else {
+                    Modifier
+                }
+            )
+    )
 }
 
 // جعبه‌ای که TutorialCard رو نگه می‌داره؛ اگه anchorRect داده بشه (یعنی موقعیت واقعی یه آیکون
@@ -2274,25 +2336,17 @@ fun ScannerScreen(
     // مرحله‌ی SETTINGS_BUTTON اینجا رندر نمی‌شه چون تنظیمات توی تب «پنل کاربری» هست، نه این
     // صفحه؛ اما SWITCH_BUTTON حالا همین‌جاست چون دکمه‌ی تغییر سیستم به این تب منتقل شد.
     val blockingStep = tutorialStep == TutorialStep.TORCH_BUTTON || tutorialStep == TutorialStep.SWITCH_BUTTON
-    if (blockingStep) {
-        // بدون clickable، این لایه‌ی نیمه‌شفاف صرفاً تصویریه و لمس رو به دکمه‌های زیرش (تنظیمات،
-        // تاریخچه و ...) عبور می‌ده. با یه clickable خالی، تا وقتی «بعدی» زده نشده، لمس‌ها همینجا
-        // جذب می‌شن و کاربر واقعاً مجبوره از توضیح‌ها رد بشه.
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.45f))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {}
-        )
-    }
     if (tutorialStep != TutorialStep.NONE) {
         val anchorRect = when (tutorialStep) {
             TutorialStep.TORCH_BUTTON -> torchIconRect
             TutorialStep.SWITCH_BUTTON -> switchIconRect
             else -> null
+        }
+        // افکت سوراخ‌نور: کل صفحه تاریک، فقط دکمه‌ی موردنظر داخل هاله‌ی روشن با حلقه‌ی آبی
+        TutorialSpotlightScrim(holeRect = anchorRect, blockTouches = blockingStep)
+        val dismissTutorial = {
+            sharedPrefs.edit().putBoolean("tutorial_completed", true).apply()
+            onTutorialStepChange(TutorialStep.NONE)
         }
         TutorialOverlayBox(anchorRect = anchorRect, gapPx = tutorialGapPx) {
             when (tutorialStep) {
@@ -2300,58 +2354,29 @@ fun ScannerScreen(
                     title = s.tutorialTorchTitle,
                     description = s.tutorialTorchDesc,
                     nextLabel = s.next,
-                    onNext = { onTutorialStepChange(TutorialStep.SCAN_BARCODE) }
+                    onNext = { onTutorialStepChange(TutorialStep.SCAN_BARCODE) },
+                    onDismissTutorial = dismissTutorial
                 )
                 TutorialStep.SCAN_BARCODE -> TutorialCard(
                     title = s.tutorialScanTitle,
                     description = s.tutorialScanDesc,
-                    onSkip = { onTutorialStepChange(TutorialStep.GOTO_HISTORY) }
+                    onSkip = { onTutorialStepChange(TutorialStep.GOTO_HISTORY) },
+                    onDismissTutorial = dismissTutorial
                 )
                 TutorialStep.GOTO_HISTORY -> TutorialCard(
                     title = s.tutorialGotoHistoryTitle,
                     description = s.tutorialGotoHistoryDesc,
-                    onSkip = { onTutorialStepChange(TutorialStep.NONE) }
+                    onSkip = { onTutorialStepChange(TutorialStep.NONE) },
+                    onDismissTutorial = dismissTutorial
                 )
                 TutorialStep.SWITCH_BUTTON -> TutorialCard(
                     title = s.tutorialSwitchTitle,
                     description = s.tutorialSwitchDesc,
                     nextLabel = s.gotIt,
-                    onNext = { onTutorialStepChange(TutorialStep.NONE) }
+                    onNext = { onTutorialStepChange(TutorialStep.NONE) },
+                    onDismissTutorial = dismissTutorial
                 )
                 else -> {}
-            }
-        }
-    }
-    // دکمه‌ی همیشه در دسترس برای رد کردن کامل آموزش - جای ثابتی داره (بالای صفحه) و به موقعیت
-    // آیکون‌ها یا اسکرول وابسته نیست، پس کاربر هیچ‌وقت توی آموزش گیر نمی‌افته و همیشه یه راه
-    // برای بستنش و برگشتن به استفاده‌ی عادی از برنامه (مثلا زدن «تغییر سیستم») داره.
-    if (tutorialStep != TutorialStep.NONE) {
-        // این دکمه یه پس‌زمینه‌ی تیره‌ی مخصوص خودش داره (نه فقط رنگ سفید روی هرچی زیرشه)، چون
-        // توی مرحله‌های غیرمسدودکننده (مثل اسکن بارکد) پشتش اسکرین تیره نیست و بدون این پس‌زمینه
-        // متن سفید روی صفحه‌ی روشن دیده نمی‌شد.
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 28.dp, end = 12.dp)
-                .graphicsLayer {
-                    shape = RoundedCornerShape(50)
-                    clip = true
-                    shadowElevation = 10.dp.toPx()
-                    ambientShadowColor = NocturneAccent
-                    spotShadowColor = NocturneAccent
-                }
-                .clip(RoundedCornerShape(50))
-                .background(Brush.linearGradient(listOf(GradientNavy, NocturneAccent)))
-                .clickable {
-                    sharedPrefs.edit().putBoolean("tutorial_completed", true).apply()
-                    onTutorialStepChange(TutorialStep.NONE)
-                }
-                .padding(horizontal = 14.dp, vertical = 9.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(imageVector = Icons.Default.Close, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
-                Spacer(Modifier.width(5.dp))
-                Text(s.skipTutorial, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall, color = Color.White)
             }
         }
     }
@@ -2518,34 +2543,11 @@ fun HistoryScreen(
                     // خود برنامه (توی MainApp) با تغییر این مرحله، خودکار به تب «پنل کاربری»
                     // می‌ره تا توضیح «تغییر سیستم» رو اونجا نشون بده.
                     onTutorialStepChange(TutorialStep.SWITCH_BUTTON)
-                }
+                },
+                onDismissTutorial = { onTutorialStepChange(TutorialStep.NONE) }
             )
         }
-        // همون دکمه‌ی ثابتِ رد کردن آموزش که توی صفحه‌ی اسکنر هم هست، برای هماهنگی و اینکه اینجا
-        // هم کاربر همیشه یه راه سریع برای بستن آموزش داشته باشه.
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 28.dp, end = 12.dp)
-                .graphicsLayer {
-                    shape = RoundedCornerShape(50)
-                    clip = true
-                    shadowElevation = 10.dp.toPx()
-                    ambientShadowColor = NocturneAccent
-                    spotShadowColor = NocturneAccent
-                }
-                .clip(RoundedCornerShape(50))
-                .background(Brush.linearGradient(listOf(GradientNavy, NocturneAccent)))
-                .clickable {
-                    onTutorialStepChange(TutorialStep.NONE)
-                }
-                .padding(horizontal = 14.dp, vertical = 9.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(imageVector = Icons.Default.Close, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
-                Spacer(Modifier.width(5.dp))
-                Text(s.skipTutorial, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall, color = Color.White)
-            }
+
         }
     }
     }
@@ -2940,6 +2942,27 @@ fun UserPanelScreen(
     if (showEditNameDialog) {
         var editedName by remember { mutableStateOf(customComputerName) }
         NamingDialog(
+            value = editedName,
+            onValueChange = { editedName = it },
+            onConfirm = {
+                val computerId = sharedPrefs.getString("computer_id", null)
+                val editor = sharedPrefs.edit().putString("custom_computer_name", editedName)
+                if (computerId != null) {
+                    editor.putString("custom_name_$computerId", editedName)
+                }
+                editor.apply()
+                customComputerName = editedName
+                showEditNameDialog = false
+            },
+            onCancel = { showEditNameDialog = false },
+            title = s.editSystemName,
+            confirmLabel = s.confirm,
+            cancelLabel = s.cancel,
+            requireNonBlank = false
+        )
+    }
+}
+  NamingDialog(
             value = editedName,
             onValueChange = { editedName = it },
             onConfirm = {
