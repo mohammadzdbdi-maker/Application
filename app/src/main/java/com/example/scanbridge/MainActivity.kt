@@ -2233,8 +2233,8 @@ fun ScannerScreen(
     var cameraControl: CameraControl? by remember { mutableStateOf(null) }
     var isLastScanVisible by remember { mutableStateOf(false) }
     var zoomLinear by remember { mutableStateOf(0f) }
-    val soundOn by remember { sharedPrefs.getBoolean("scan_sound", true) }
-    val vibrationOn by remember { sharedPrefs.getBoolean("scan_vibration", true) }
+    val soundOn by remember { mutableStateOf(sharedPrefs.getBoolean("scan_sound", true)) }
+    val vibrationOn by remember { mutableStateOf(sharedPrefs.getBoolean("scan_vibration", true)) }
 
     fun applyZoom(target: Float) {
         zoomLinear = target.coerceIn(0f, 1f)
