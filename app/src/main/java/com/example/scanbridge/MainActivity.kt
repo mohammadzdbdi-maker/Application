@@ -6,6 +6,8 @@ import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.view.WindowManager
+import androidx.compose.runtime.DisposableEffect
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -158,6 +160,10 @@ class Strings(val lang: AppLanguage) {
     val pairingViaUsb = if (lang == AppLanguage.FA) "اتصال با کابل USB" else "Connect via USB Cable"
     val chooseConnectionTitle = if (lang == AppLanguage.FA) "چطور وصل می‌شوید؟" else "How do you want to connect?"
     val chooseConnectionDesc = if (lang == AppLanguage.FA) "هر دو روش به همان سیستم وصل می‌شوند" else "Both methods connect to the same system"
+    val settingsSound = if (lang == AppLanguage.FA) "صدای اسکن" else "Scan sound"
+    val settingsVibration = if (lang == AppLanguage.FA) "لرزش هنگام اسکن" else "Vibrate on scan"
+    val settingsFeedbackTitle = if (lang == AppLanguage.FA) "صدا و لرزش" else "Sound & Vibration"
+    val updateDownloading = if (lang == AppLanguage.FA) "در حال دانلود نسخه جدید... پیشرفت را از نوار اعلان ببینید. بعد از پایان، پنجره‌ی نصب باز می‌شود." else "Downloading the new version... watch the notification; the install dialog opens when it finishes."
     val notConnectedYet = if (lang == AppLanguage.FA) "هنوز به هیچ سیستمی وصل نیستی" else "Not connected to a system yet"
     val pairingErrorBrand = if (lang == AppLanguage.FA) "این QR کد مربوط به ScanBridge نیست" else "Not a ScanBridge QR code"
     val pairingErrorFormat = if (lang == AppLanguage.FA) "ساختار QR کد اشتباه است" else "Invalid QR format"
@@ -582,7 +588,21 @@ class WebSocketManager(
 
 // --- MainActivity ---
 
+// گذرگاه دکمه‌های ولوم: ScannerScreen هنگام باز بودن، هندلر ثبت می‌کند تا دکمه‌های
+// ولوم مثل دکمه‌های زوم دوربین عمل کنند (بالا = بزرگ‌نمایی، پایین = کوچک‌نمایی).
+object VolumeKeyBus {
+    @Volatile
+    var handler: ((Int) -> Boolean)? = null
+}
+
 class MainActivity : ComponentActivity() {
+    override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent?): Boolean {
+        if (keyCode == android.view.KeyEvent.KEYCODE_VOLUME_UP || keyCode == android.view.KeyEvent.KEYCODE_VOLUME_DOWN) {
+            VolumeKeyBus.handler?.let { h -> if (h(keyCode)) return true }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
 
@@ -2212,6 +2232,30 @@ fun ScannerScreen(
     var isTorchOn by remember { mutableStateOf(false) }
     var cameraControl: CameraControl? by remember { mutableStateOf(null) }
     var isLastScanVisible by remember { mutableStateOf(false) }
+    var zoomLinear by remember { mutableStateOf(0f) }
+    val soundOn by remember { sharedPrefs.getBoolean("scan_sound", true) }
+    val vibrationOn by remember { sharedPrefs.getBoolean("scan_vibration", true) }
+
+    fun applyZoom(target: Float) {
+        zoomLinear = target.coerceIn(0f, 1f)
+        cameraControl?.setLinearZoom(zoomLinear)
+    }
+
+    // صفحه تا وقتی صفحه‌ی اسکن باز است خاموش نمی‌شود (کاربرد پشت پیشخون داروخانه)
+    val keepOnActivity = context as? Activity
+    DisposableEffect(Unit) {
+        keepOnActivity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose { keepOnActivity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
+    }
+
+    // دکمه‌های ولوم = زوم دوربین (مثل دوربین واقعی)
+    DisposableEffect(Unit) {
+        VolumeKeyBus.handler = { keyCode ->
+            applyZoom(zoomLinear + if (keyCode == android.view.KeyEvent.KEYCODE_VOLUME_UP) 0.15f else -0.15f)
+            true
+        }
+        onDispose { VolumeKeyBus.handler = null }
+    }
 
     // موقعیت واقعی روی صفحه‌ی آیکون چراغ‌قوه و دکمه‌ی تغییر سیستم - برای اینکه کارت راهنما
     // دقیقاً نزدیک همون آیکون باز بشه، نه همیشه ته صفحه.
@@ -2391,8 +2435,8 @@ fun ScannerScreen(
                         if (sent) {
                             borderState = 1
                             isLastScanVisible = true
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 100)
+                            if (vibrationOn) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            if (soundOn) toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 100)
                             val time = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
                             history.add(0, ScanHistoryItem(barcode = barcode, time = time, format = format))
                             if (tutorialStep == TutorialStep.SCAN_BARCODE) {
@@ -2427,6 +2471,50 @@ fun ScannerScreen(
         }
 
         Spacer(Modifier.height(16.dp))
+
+        // کنترل زوم دوربین — برای بارکدهای ریز؛ دکمه‌های ولوم هم همین کار را می‌کنند
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(NocturneAccentTint)
+                    .border(1.dp, NocturneAccent.copy(alpha = 0.4f), CircleShape)
+                    .clickable { applyZoom(zoomLinear - 0.15f) },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Remove, contentDescription = null, tint = NocturneAccent, modifier = Modifier.size(18.dp))
+            }
+            Slider(
+                value = zoomLinear,
+                onValueChange = { applyZoom(it) },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 10.dp),
+                colors = androidx.compose.material3.SliderDefaults.colors(
+                    thumbColor = NocturneAccent,
+                    activeTrackColor = NocturneAccent,
+                    inactiveTrackColor = NocturneNeutral
+                )
+            )
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(GradientNavy, NocturneAccent)))
+                    .clickable { applyZoom(zoomLinear + 0.15f) },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+            }
+        }
+
+        Spacer(Modifier.height(10.dp))
 
         // Floating "Last Scan" Card
         val lastItem = history.firstOrNull()
@@ -2687,6 +2775,60 @@ fun HistoryScreen(
             )
         }
     }
+    }
+}
+
+// دانلود و نصب مستقیم نسخه‌ی جدید: فایل APK با DownloadManager گرفته می‌شود (نوار پیشرفت
+// در اعلان‌ها) و بلافاصله بعد از پایان، پنجره‌ی نصب اندروید باز می‌شود. دفعه‌ی اول سیستم
+// می‌پرسد اجازه‌ی «نصب از منابع ناشناس» برای این برنامه داده شود که یک‌بار برای همیشه است.
+private fun downloadAndInstallUpdate(context: android.content.Context, url: String) {
+    try {
+        val request = android.app.DownloadManager.Request(android.net.Uri.parse(url))
+            .setTitle("ScanBridge — نسخه جدید")
+            .setDescription("در حال دانلود نسخه جدید...")
+            .setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalPublicDir(
+                android.os.Environment.DIRECTORY_DOWNLOADS,
+                "scanbridge-update.apk"
+            )
+            .setMimeType("application/vnd.android.package-archive")
+
+        val dm = context.getSystemService(android.content.Context.DOWNLOAD_SERVICE) as android.app.DownloadManager
+        val downloadId = dm.enqueue(request)
+
+        val filter = android.content.IntentFilter(android.app.DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        val receiver = object : android.content.BroadcastReceiver() {
+            override fun onReceive(c: android.content.Context?, intent: android.content.Intent?) {
+                val doneId = intent?.getLongExtra(android.app.DownloadManager.EXTRA_DOWNLOAD_ID, -1L) ?: -1L
+                if (doneId != downloadId) return
+                try { context.unregisterReceiver(this) } catch (e: Exception) { }
+                val uri = dm.getUriForDownloadedFile(downloadId)
+                if (uri == null) {
+                    android.widget.Toast.makeText(context, "دانلود ناموفق بود", android.widget.Toast.LENGTH_SHORT).show()
+                    return
+                }
+                val install = android.content.Intent(android.content.Intent.ACTION_VIEW)
+                    .setDataAndType(uri, "application/vnd.android.package-archive")
+                    .setFlags(
+                        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                        android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                    )
+                try {
+                    context.startActivity(install)
+                } catch (e: Exception) {
+                    android.widget.Toast.makeText(context, "باز کردن نصب ممکن نشد", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+        context.registerReceiver(receiver, filter)
+
+        android.widget.Toast.makeText(
+            context,
+            "در حال دانلود نسخه جدید... پیشرفت را از نوار اعلان ببینید",
+            android.widget.Toast.LENGTH_LONG
+        ).show()
+    } catch (e: Exception) {
+        android.widget.Toast.makeText(context, "شروع دانلود ممکن نشد: " + e.message, android.widget.Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -3279,6 +3421,46 @@ fun UserPanelScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        // صدا و لرزش
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(NocturneSurface, RoundedCornerShape(14.dp))
+                .padding(16.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.size(36.dp).background(NocturneAccentTint, RoundedCornerShape(10.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.VolumeUp, contentDescription = null, tint = NocturneAccentLight, modifier = Modifier.size(18.dp))
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(s.settingsFeedbackTitle, style = MaterialTheme.typography.titleSmall, color = NocturneText)
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(s.settingsSound, style = MaterialTheme.typography.bodySmall, color = NocturneText)
+                }
+                Switch(
+                    checked = sharedPrefs.getBoolean("scan_sound", true),
+                    onCheckedChange = { on -> sharedPrefs.edit().putBoolean("scan_sound", on).apply() }
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(s.settingsVibration, style = MaterialTheme.typography.bodySmall, color = NocturneText)
+                }
+                Switch(
+                    checked = sharedPrefs.getBoolean("scan_vibration", true),
+                    onCheckedChange = { on -> sharedPrefs.edit().putBoolean("scan_vibration", on).apply() }
+                )
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
         // حالت داروخانه (فقط شبکه محلی) — قطع کامل اینترنت گوشی با VPN محلی، بدون روت
         var lanOnlyChecked by remember { mutableStateOf(LanOnlyVpnService.isRunning(context)) }
         val vpnConsentLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -3479,11 +3661,7 @@ fun UserPanelScreen(
                         available = hasNewMessage,
                         onUpdate = if (hasNewMessage && msg.url.isNotEmpty()) {
                             {
-                                try {
-                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(msg.url)))
-                                } catch (e: Exception) {
-                                    Log.e("ScanBridge", "Could not open update url", e)
-                                }
+                                downloadAndInstallUpdate(context, msg.url)
                             }
                         } else null
                     )
