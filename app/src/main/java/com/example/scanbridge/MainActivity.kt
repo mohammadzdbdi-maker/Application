@@ -640,7 +640,10 @@ fun MainApp(
     val sharedPrefs = remember { context.getSharedPreferences("ScanBridgePrefs", Context.MODE_PRIVATE) }
     val deviceName = remember { "${Build.MANUFACTURER} ${Build.MODEL}" }
 
-    var currentScreen by remember { mutableStateOf(AppScreen.INTRO) }
+    // Intro فقط بار اول نشان داده می‌شود؛ دفعات بعد مستقیم تب اسکن باز می‌شود
+    var currentScreen by remember {
+        mutableStateOf(if (sharedPrefs.getBoolean("intro_done", false)) AppScreen.SCANNER else AppScreen.INTRO)
+    }
     var tutorialStep by remember { mutableStateOf(TutorialStep.NONE) }
 
     // از این به بعد، چه کاربر قبلاً جفت شده باشه چه نه، همیشه مستقیم وارد «پنجره اصلی» (تب اسکن،
@@ -662,6 +665,8 @@ fun MainApp(
         if (!tutorialDone && tutorialStep != TutorialStep.NONE) {
             sharedPrefs.edit().putBoolean("tutorial_completed", true).apply()
         }
+        // از این به بعد دیگر Intro نشان داده نمی‌شود
+        sharedPrefs.edit().putBoolean("intro_done", true).apply()
     }
 
     val scanHistory = remember { mutableStateListOf<ScanHistoryItem>() }
@@ -817,8 +822,10 @@ fun MainApp(
                             connectionStatus = connectionStatus,
                             bufferedCount = bufferedCount,
                             onSwitchSystem = {
+                                // قطع کامل و پاک کردن هر دو کلید جفت‌سازی؛ وگرنه بعد از بستن
+                                // برنامه، دوباره خودکار به همان سیستم قبلی وصل می‌شد.
                                 wsManager?.shutdown()
-                                sharedPrefs.edit().remove("computer_ip").apply()
+                                sharedPrefs.edit().remove("computer_ip").remove("server_url").apply()
                                 serverUrlState.value = ""
                             },
                             onExit = { (context as? Activity)?.finish() },
