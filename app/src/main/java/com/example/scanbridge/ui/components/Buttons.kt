@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -119,23 +120,49 @@ fun SecondaryButton(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null
 ) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.height(48.dp),
-        shape = CircleShape,
-        color = NocturneAccentTint,
-        border = BorderStroke(1.dp, NocturneAccent.copy(alpha = 0.4f))
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+
+    // دکمه‌ی ثانویه‌ی رنگی: گرادیان آبی یخی + متن آبی پررنگ + سایه‌ی نرم — جذاب اما
+    // هم‌ردیفِ سلسله‌مراتب دکمه‌ی اصلی (اصلی پررنگ، ثانویه ملایم‌تر).
+    val scale by animateFloatAsState(if (pressed) 0.97f else 1f, label = "secondaryBtnScale")
+    val elevation by animateDpAsState(if (pressed) 2.dp else 6.dp, label = "secondaryBtnElev")
+
+    Box(
+        modifier = modifier
+            .height(48.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                shape = CircleShape
+                clip = true
+                shadowElevation = elevation.toPx()
+                ambientShadowColor = NocturneAccent.copy(alpha = 0.35f)
+                spotShadowColor = NocturneAccent.copy(alpha = 0.45f)
+            }
+            .background(
+                Brush.linearGradient(listOf(NocturneAccentContainer, NocturneAccentTint)),
+                CircleShape
+            )
+            .border(BorderStroke(1.dp, NocturneAccent.copy(alpha = 0.45f)), CircleShape)
+            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
+            .padding(horizontal = 18.dp),
+        contentAlignment = Alignment.Center
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 18.dp),
             horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (icon != null) {
-                Icon(icon, contentDescription = null, tint = NocturneAccentLight, modifier = Modifier.size(16.dp))
+                Icon(icon, contentDescription = null, tint = NocturneAccent, modifier = Modifier.size(16.dp))
                 androidx.compose.foundation.layout.Spacer(Modifier.size(6.dp))
             }
-            Text(text = label, color = NocturneText, style = MaterialTheme.typography.labelLarge)
+            Text(
+                text = label,
+                color = NocturneAccentPale,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelLarge
+            )
         }
     }
 }
@@ -163,15 +190,58 @@ fun IconActionButton(
     }
     val tint = if (tone == IconActionTone.Accent) NocturneAccentLight else NocturneText
 
-    Surface(
-        onClick = onClick,
-        modifier = modifier.size(48.dp),
-        shape = CircleShape,
-        color = bg,
-        border = if (glass) BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)) else null
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = contentDescription, tint = tint, modifier = Modifier.size(20.dp))
+    // دکمه‌های آیکونی (تغییر سیستم، خروج، ارسال مجدد و...) حالا رنگی و برجسته‌اند:
+    // اکسنت = چیپ گرادیان آبی با آیکون سفید؛ خنثی = زمینه‌ی آبی یخی با آیکون آبی؛
+    // حالت شیشه‌ای روی دوربین دست‌نخورده می‌ماند.
+    if (glass) {
+        Surface(
+            onClick = onClick,
+            modifier = modifier.size(48.dp),
+            shape = CircleShape,
+            color = bg,
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f))
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = contentDescription, tint = Color.White, modifier = Modifier.size(20.dp))
+            }
+        }
+    } else {
+        val accent = tone == IconActionTone.Accent
+        val interactionSource = remember { MutableInteractionSource() }
+        val pressed by interactionSource.collectIsPressedAsState()
+        val scale by animateFloatAsState(if (pressed) 0.92f else 1f, label = "iconActionScale")
+        val elevation by animateDpAsState(if (pressed) 2.dp else if (accent) 8.dp else 5.dp, label = "iconActionElev")
+
+        Box(
+            modifier = modifier
+                .size(48.dp)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    shape = CircleShape
+                    clip = true
+                    shadowElevation = elevation.toPx()
+                    ambientShadowColor = NocturneAccent.copy(alpha = 0.35f)
+                    spotShadowColor = NocturneAccent.copy(alpha = 0.45f)
+                }
+                .background(
+                    if (accent) Brush.linearGradient(listOf(GradientNavy, NocturneAccent))
+                    else Brush.linearGradient(listOf(NocturneAccentContainer, NocturneAccentTint)),
+                    CircleShape
+                )
+                .border(
+                    BorderStroke(1.dp, if (accent) Color.Transparent else NocturneAccent.copy(alpha = 0.45f)),
+                    CircleShape
+                )
+                .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                icon,
+                contentDescription = contentDescription,
+                tint = if (accent) Color.White else NocturneAccent,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }

@@ -1467,7 +1467,9 @@ fun TutorialCard(
     description: String,
     modifier: Modifier = Modifier,
     onNext: (() -> Unit)? = null,
-    nextLabel: String = "بعدی"
+    nextLabel: String = "بعدی",
+    onSkip: (() -> Unit)? = null,
+    skipLabel: String = "فعلاً رد می‌کنم"
 ) {
     // ورود نرم: کارت با کمی تأخیرِ محسوس از پایین بالا می‌آید و محو-به-واضح می‌شود.
     var entered by remember { mutableStateOf(false) }
@@ -1542,24 +1544,48 @@ fun TutorialCard(
                 style = MaterialTheme.typography.bodySmall
             )
 
-            if (onNext != null) {
+            if (onNext != null || onSkip != null) {
                 Spacer(Modifier.height(14.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End)
+                ) {
+                    // گزینه‌ی رد کردن این قدم — برای مراحلی که منتظر اکشن واقعی کاربر هستند
+                    // (مثل اسکن بارکد) تا کاربر بدون اون اکشن هم گیر نیافتد.
+                    if (onSkip != null) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(13.dp))
+                                .background(NocturneAccentTint)
+                                .clickable { onSkip() }
+                                .padding(horizontal = 16.dp, vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                skipLabel,
+                                color = NocturneAccentPale,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
                     // دکمه‌ی «بعدی» — همان دکمه‌ی گرادیانی برجسته‌ی اپ
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(13.dp))
-                            .background(Brush.linearGradient(listOf(GradientNavy, NocturneAccent)))
-                            .clickable { onNext() }
-                            .padding(horizontal = 22.dp, vertical = 10.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            nextLabel,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.labelLarge
-                        )
+                    if (onNext != null) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(13.dp))
+                                .background(Brush.linearGradient(listOf(GradientNavy, NocturneAccent)))
+                                .clickable { onNext() }
+                                .padding(horizontal = 22.dp, vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                nextLabel,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
                     }
                 }
             }
@@ -2287,11 +2313,13 @@ fun ScannerScreen(
                 )
                 TutorialStep.SCAN_BARCODE -> TutorialCard(
                     title = s.tutorialScanTitle,
-                    description = s.tutorialScanDesc
+                    description = s.tutorialScanDesc,
+                    onSkip = { onTutorialStepChange(TutorialStep.GOTO_HISTORY) }
                 )
                 TutorialStep.GOTO_HISTORY -> TutorialCard(
                     title = s.tutorialGotoHistoryTitle,
-                    description = s.tutorialGotoHistoryDesc
+                    description = s.tutorialGotoHistoryDesc,
+                    onSkip = { onTutorialStepChange(TutorialStep.NONE) }
                 )
                 TutorialStep.SWITCH_BUTTON -> TutorialCard(
                     title = s.tutorialSwitchTitle,
@@ -2310,22 +2338,28 @@ fun ScannerScreen(
         // این دکمه یه پس‌زمینه‌ی تیره‌ی مخصوص خودش داره (نه فقط رنگ سفید روی هرچی زیرشه)، چون
         // توی مرحله‌های غیرمسدودکننده (مثل اسکن بارکد) پشتش اسکرین تیره نیست و بدون این پس‌زمینه
         // متن سفید روی صفحه‌ی روشن دیده نمی‌شد.
-        Surface(
+        Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 28.dp, end = 12.dp),
-            shape = RoundedCornerShape(50),
-            color = Color.Black.copy(alpha = 0.55f)
-        ) {
-            TextButton(
-                onClick = {
+                .padding(top = 28.dp, end = 12.dp)
+                .graphicsLayer {
+                    shape = RoundedCornerShape(50)
+                    clip = true
+                    shadowElevation = 10.dp.toPx()
+                    ambientShadowColor = NocturneAccent
+                    spotShadowColor = NocturneAccent
+                }
+                .clip(RoundedCornerShape(50))
+                .background(Brush.linearGradient(listOf(GradientNavy, NocturneAccent)))
+                .clickable {
                     sharedPrefs.edit().putBoolean("tutorial_completed", true).apply()
                     onTutorialStepChange(TutorialStep.NONE)
-                },
-                colors = ButtonDefaults.textButtonColors(contentColor = Color.White)
-            ) {
-                Icon(imageVector = Icons.Default.Close, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(4.dp))
+                }
+                .padding(horizontal = 14.dp, vertical = 9.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(imageVector = Icons.Default.Close, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                Spacer(Modifier.width(5.dp))
                 Text(s.skipTutorial, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall, color = Color.White)
             }
         }
@@ -2498,21 +2532,27 @@ fun HistoryScreen(
         }
         // همون دکمه‌ی ثابتِ رد کردن آموزش که توی صفحه‌ی اسکنر هم هست، برای هماهنگی و اینکه اینجا
         // هم کاربر همیشه یه راه سریع برای بستن آموزش داشته باشه.
-        Surface(
+        Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 28.dp, end = 12.dp),
-            shape = RoundedCornerShape(50),
-            color = Color.Black.copy(alpha = 0.55f)
-        ) {
-            TextButton(
-                onClick = {
+                .padding(top = 28.dp, end = 12.dp)
+                .graphicsLayer {
+                    shape = RoundedCornerShape(50)
+                    clip = true
+                    shadowElevation = 10.dp.toPx()
+                    ambientShadowColor = NocturneAccent
+                    spotShadowColor = NocturneAccent
+                }
+                .clip(RoundedCornerShape(50))
+                .background(Brush.linearGradient(listOf(GradientNavy, NocturneAccent)))
+                .clickable {
                     onTutorialStepChange(TutorialStep.NONE)
-                },
-                colors = ButtonDefaults.textButtonColors(contentColor = Color.White)
-            ) {
-                Icon(imageVector = Icons.Default.Close, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(4.dp))
+                }
+                .padding(horizontal = 14.dp, vertical = 9.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(imageVector = Icons.Default.Close, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                Spacer(Modifier.width(5.dp))
                 Text(s.skipTutorial, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall, color = Color.White)
             }
         }
