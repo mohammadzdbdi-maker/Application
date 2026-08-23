@@ -2106,28 +2106,19 @@ fun ScannerScreen(
                 IconActionButton(
                     icon = Icons.Default.SwapHoriz,
                     onClick = onSwitchSystem,
-                    tone = IconActionTone.Accent,
+                    tone = IconActionTone.Warn,
                     contentDescription = s.switchSystem
                 )
             }
             Spacer(Modifier.width(8.dp))
             // دکمه‌ی خروج از برنامه - طبق درخواست، از پنل کاربری برداشته شد و آورده شد بالای همین
-            // تب اسکن.
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(ErrorRed.copy(alpha = 0.12f))
-                    .clickable { onExit() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = s.exitApp,
-                    tint = ErrorRed,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
+            // تب اسکن — قرمز گرادیانی با سایه‌ی هم‌رنگ.
+            IconActionButton(
+                icon = Icons.AutoMirrored.Filled.ExitToApp,
+                onClick = onExit,
+                tone = IconActionTone.Danger,
+                contentDescription = s.exitApp
+            )
         }
 
         Spacer(Modifier.weight(0.5f))

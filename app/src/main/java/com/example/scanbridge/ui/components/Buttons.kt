@@ -32,7 +32,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.scanbridge.ui.theme.AmberAccent
+import com.example.scanbridge.ui.theme.ErrorRed
 import com.example.scanbridge.ui.theme.GradientNavy
+import com.example.scanbridge.ui.theme.GradientOrange
+import com.example.scanbridge.ui.theme.GradientRed
 import com.example.scanbridge.ui.theme.NocturneAccent
 import com.example.scanbridge.ui.theme.NocturneAccentContainer
 import com.example.scanbridge.ui.theme.NocturneAccentLight
@@ -167,8 +171,8 @@ fun SecondaryButton(
     }
 }
 
-/** رنگ‌بندی IconActionButton: accent (پررنگ) یا neutral (خنثی). */
-enum class IconActionTone { Accent, Neutral }
+/** رنگ‌بندی IconActionButton: accent (آبی) / warn (نارنجی) / danger (قرمز) / neutral (خنثی). */
+enum class IconActionTone { Accent, Warn, Danger, Neutral }
 
 /**
  * IconActionButton — دکمه‌ی دایره‌ای آیکون‌دار (هدر اسکنر، اورلی دوربین، History).
@@ -207,10 +211,29 @@ fun IconActionButton(
         }
     } else {
         val accent = tone == IconActionTone.Accent
+        val warn = tone == IconActionTone.Warn
+        val danger = tone == IconActionTone.Danger
         val interactionSource = remember { MutableInteractionSource() }
         val pressed by interactionSource.collectIsPressedAsState()
         val scale by animateFloatAsState(if (pressed) 0.92f else 1f, label = "iconActionScale")
         val elevation by animateDpAsState(if (pressed) 2.dp else if (accent) 8.dp else 5.dp, label = "iconActionElev")
+
+        // رنگ‌ها بر اساس tone: آبی (اکشن اصلی) / نارنجی (تغییر سیستم) / قرمز (خروج) / یخی (خنثی)
+        val gradient = when {
+            accent -> Brush.linearGradient(listOf(GradientNavy, NocturneAccent))
+            warn -> Brush.linearGradient(listOf(GradientOrange, AmberAccent))
+            danger -> Brush.linearGradient(listOf(GradientRed, ErrorRed))
+            else -> Brush.linearGradient(listOf(NocturneAccentContainer, NocturneAccentTint))
+        }
+        val shadowColor = when {
+            danger -> ErrorRed
+            warn -> AmberAccent
+            else -> NocturneAccent
+        }
+        val iconTint = when {
+            accent || warn || danger -> Color.White
+            else -> NocturneAccent
+        }
 
         Box(
             modifier = modifier
@@ -221,16 +244,15 @@ fun IconActionButton(
                     shape = CircleShape
                     clip = true
                     shadowElevation = elevation.toPx()
-                    ambientShadowColor = NocturneAccent.copy(alpha = 0.35f)
-                    spotShadowColor = NocturneAccent.copy(alpha = 0.45f)
+                    ambientShadowColor = shadowColor.copy(alpha = 0.35f)
+                    spotShadowColor = shadowColor.copy(alpha = 0.45f)
                 }
-                .background(
-                    if (accent) Brush.linearGradient(listOf(GradientNavy, NocturneAccent))
-                    else Brush.linearGradient(listOf(NocturneAccentContainer, NocturneAccentTint)),
-                    CircleShape
-                )
+                .background(gradient, CircleShape)
                 .border(
-                    BorderStroke(1.dp, if (accent) Color.Transparent else NocturneAccent.copy(alpha = 0.45f)),
+                    BorderStroke(
+                        1.dp,
+                        if (accent || warn || danger) Color.Transparent else NocturneAccent.copy(alpha = 0.45f)
+                    ),
                     CircleShape
                 )
                 .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
@@ -239,7 +261,7 @@ fun IconActionButton(
             Icon(
                 icon,
                 contentDescription = contentDescription,
-                tint = if (accent) Color.White else NocturneAccent,
+                tint = iconTint,
                 modifier = Modifier.size(20.dp)
             )
         }

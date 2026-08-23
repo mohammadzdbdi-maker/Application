@@ -8,6 +8,8 @@ import androidx.compose.ui.graphics.Color
 // اعتماد (BluePrimary) کنار سرمه‌ای اصلی (NavyPrimary) نگه داشته شدن.
 val NavyPrimary = Color(0xFF1A237E)
 val GradientNavy = Color(0xFF1E3A8A) // شروع گرادیان لوکس دکمه‌ها — هم‌خانواده‌ی صفحه راهنمای سایت (#1E3A8A → #2563EB)
+val GradientRed = Color(0xFFB3261E)    // شروع گرادیان قرمز دکمه خروج (→ ErrorRed)
+val GradientOrange = Color(0xFFD97706) // شروع گرادیان نارنجی دکمه تغییر سیستم (→ AmberAccent)
 val BluePrimary = Color(0xFF2563EB)
 val AmberAccent = Color(0xFFF97316)
 val SuccessGreen = Color(0xFF10B981) // هم‌رنگ با آیکون موفقیت نرم‌افزار دسکتاپ (ShowStyledMessage)
