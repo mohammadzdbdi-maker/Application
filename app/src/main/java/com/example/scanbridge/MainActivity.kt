@@ -641,13 +641,10 @@ fun MainApp(
         val alreadyPaired = sharedPrefs.getString("computer_ip", null) != null
         val tutorialDone = sharedPrefs.getBoolean("tutorial_completed", false)
         currentScreen = AppScreen.SCANNER
-        if (alreadyPaired) {
-            // اگه قبلاً جفت شده ولی هنوز آموزش رو ندیده (مثلاً کاربر قدیمی)، از همون قسمت
-            // توضیح دکمه‌ها شروع می‌شه، نه از نام‌گذاری سیستم که فقط توی جفت‌سازی معنی داره.
-            tutorialStep = if (tutorialDone) TutorialStep.NONE else TutorialStep.SETTINGS_BUTTON
-        } else {
-            tutorialStep = if (tutorialDone) TutorialStep.NONE else TutorialStep.NAME_SYSTEM
-        }
+        // طبق درخواست: tip های قدم‌به‌قدمِ اولین ورود دیگر نشان داده نمی‌شوند.
+        // راهنمای کامل برنامه در تب «پنل کاربری» بخش «راهنما» در دسترس است.
+        tutorialStep = TutorialStep.NONE
+        sharedPrefs.edit().putBoolean("tutorial_completed", true).apply()
         // همین که آموزش شروع شد (نه فقط وقتی تموم شد)، یه بار برای همیشه ثبت می‌شه که دیده شده.
         // اگه کاربر وسط آموزش از دکمه‌ی خروج بزنه و دوباره برنامه رو باز کنه، دیگه آموزش
         // نباید از اول شروع بشه.
@@ -1952,12 +1949,22 @@ fun PairingScreen(
                 .align(Alignment.TopCenter)
         ) {
             Surface(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color.Black.copy(alpha = 0.35f)).border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(16.dp)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        shape = RoundedCornerShape(16.dp)
+                        clip = true
+                        shadowElevation = 12.dp.toPx()
+                        ambientShadowColor = Color.Black.copy(alpha = 0.35f)
+                        spotShadowColor = Color.Black.copy(alpha = 0.45f)
+                    }
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.White),
                 color = Color.Transparent
             ) {
                 Text(
                     text = s.pairingInstruction,
-                    color = Color.White,
+                    color = NocturneText,
                     modifier = Modifier.padding(16.dp).fillMaxWidth(),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodyMedium,
@@ -2592,22 +2599,53 @@ data class UpdateMessage(
 private data class GuideSection(
     val title: String,
     val description: String,
-    val drawableName: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector
 )
 
 @Composable
 private fun GuideScreenContent(s: Strings) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val fa = s.lang == AppLanguage.FA
     val sections = listOf(
-        GuideSection("۱. اتصال به سیستم", "در تب اسکن، کارت «اتصال به سیستم» را بزنید و QR نمایش‌داده‌شده روی ویندوز را با دوربین گوشی اسکن کنید. گوشی باید در همان وای‌فای سیستم باشد.", "guide_connect", Icons.Default.QrCode2),
-        GuideSection("۲. اسکن بارکد", "دوربین را روی بارکد بگیرید؛ ثبت خودکار انجام می‌شود، نتیجه در کارت «آخرین اسکن» می‌آید و برای سیستم فرستاده می‌شود.", "guide_scan", Icons.Default.CenterFocusStrong),
-        GuideSection("۳. چراغ‌غشو", "در محیط کم‌نور، آیکون فلاش کنار دوربین را بزنید تا نور روشن شود؛ دوباره بزنید خاموش می‌شود.", "guide_torch", Icons.Default.FlashlightOn),
-        GuideSection("۴. تاریخچه و ارسال مجدد", "تب «تاریخچه» همه‌ی اسکن‌ها را با ساعت و نوع نشان می‌دهد. با دکمه‌ی ارسال مجدد می‌توانید هر بارکد را دوباره برای سیستم بفرستید.", "guide_history", Icons.Default.History),
-        GuideSection("۵. پنل کاربری", "تغییر نام سیستم، تغییر زبان، بررسی بروزرسانی، پیام‌ها و همین راهنما — همه در تب «پنل کاربری» جمع شده‌اند.", "guide_panel", Icons.Default.Person),
-        GuideSection("۶. حالت داروخانه", "اینترنت گوشی را به‌کلی قطع می‌کند و فقط ارتباط با سیستم روی شبکه‌ی محلی باز می‌ماند — مناسب داروخانه‌هایی که نمی‌خواهند پرسنل اینترنت داشته باشند.", "guide_pharmacy", Icons.Default.WifiOff),
-        GuideSection("۷. تغییر سیستم و خروج", "با دکمه‌ی نارنجی بالا-چپِ تب اسکن، گوشی را به سیستم دیگری وصل کنید. دکمه‌ی قرمز کنارش هم از برنامه خارج می‌شود.", "guide_switch", Icons.Default.SwapHoriz),
-        GuideSection("۸. تغییر زبان", "از پنل کاربری، بخش «زبان»، بین فارسی و English انتخاب کنید — همه‌ی متن‌های برنامه همان لحظه عوض می‌شوند.", "guide_language", Icons.Default.Language)
+        GuideSection(
+            if (fa) "۱. اتصال به سیستم" else "1. Connect to System",
+            if (fa) "در تب اسکن، کارت «اتصال به سیستم» را بزنید و QR نمایش‌داده‌شده روی ویندوز را با دوربین گوشی اسکن کنید. گوشی باید در همان وای‌فای سیستم باشد." else "In the Scan tab, tap "Connect to System" and scan the QR code shown on Windows. The phone must be on the same Wi-Fi as the computer.",
+            Icons.Default.QrCode2
+        ),
+        GuideSection(
+            if (fa) "۲. اسکن بارکد" else "2. Scanning Barcodes",
+            if (fa) "دوربین را روی بارکد بگیرید؛ ثبت خودکار انجام می‌شود، نتیجه در کارت «آخرین اسکن» می‌آید و برای سیستم فرستاده می‌شود." else "Point the camera at a barcode; it is recorded automatically, shown in the Last Scan card and sent to the computer.",
+            Icons.Default.CenterFocusStrong
+        ),
+        GuideSection(
+            if (fa) "۳. چراغ‌قوه" else "3. Flashlight",
+            if (fa) "در محیط کم‌نور، آیکون فلاش کنار دوربین را بزنید تا نور روشن شود؛ دوباره بزنید خاموش می‌شود." else "In low light, tap the flash icon next to the camera to turn it on; tap again to turn it off.",
+            Icons.Default.FlashlightOn
+        ),
+        GuideSection(
+            if (fa) "۴. تاریخچه و ارسال مجدد" else "4. History & Resend",
+            if (fa) "تب «تاریخچه» همه‌ی اسکن‌ها را با ساعت و نوع نشان می‌دهد. با دکمه‌ی ارسال مجدد می‌توانید هر بارکد را دوباره برای سیستم بفرستید." else "The History tab lists every scan with time and type. Use the resend button to send any barcode to the computer again.",
+            Icons.Default.History
+        ),
+        GuideSection(
+            if (fa) "۵. پنل کاربری" else "5. Profile Tab",
+            if (fa) "تغییر نام سیستم، تغییر زبان، بررسی بروزرسانی، پیام‌ها و همین راهنما — همه در تب «پنل کاربری» جمع شده‌اند." else "Rename the system, change language, check for updates, messages and this guide — all in the Profile tab.",
+            Icons.Default.Person
+        ),
+        GuideSection(
+            if (fa) "۶. حالت داروخانه" else "6. Pharmacy Mode",
+            if (fa) "اینترنت گوشی را به‌کلی قطع می‌کند و فقط ارتباط با سیستم روی شبکه‌ی محلی باز می‌ماند — مناسب داروخانه‌هایی که نمی‌خواهند پرسنل اینترنت داشته باشند." else "Cuts the phone's internet completely while keeping the local network connection to the system alive — ideal when staff should not have internet access.",
+            Icons.Default.WifiOff
+        ),
+        GuideSection(
+            if (fa) "۷. تغییر سیستم و خروج" else "7. Switch System & Exit",
+            if (fa) "با دکمه‌ی نارنجی بالا-چپِ تب اسکن، گوشی را به سیستم دیگری وصل کنید. دکمه‌ی قرمز کنارش هم از برنامه خارج می‌شود." else "Use the orange button at the top of the Scan tab to pair with another computer. The red button next to it exits the app.",
+            Icons.Default.SwapHoriz
+        ),
+        GuideSection(
+            if (fa) "۸. تغییر زبان" else "8. Language",
+            if (fa) "از پنل کاربری، بخش «زبان»، بین فارسی و English انتخاب کنید — همه‌ی متن‌های برنامه همان لحظه عوض می‌شوند." else "From the Profile tab, Language section, switch between English and فارسی — the whole app updates instantly.",
+            Icons.Default.Language
+        )
     )
 
     Column(
@@ -2647,32 +2685,7 @@ private fun GuideScreenContent(s: Strings) {
                 Spacer(Modifier.height(8.dp))
                 Text(section.description, style = MaterialTheme.typography.bodySmall, color = NocturneTextMuted)
 
-                Spacer(Modifier.height(12.dp))
-                val resId = remember(section.drawableName) {
-                    context.resources.getIdentifier(section.drawableName, "drawable", context.packageName)
-                }
-                if (resId != 0) {
-                    Image(
-                        painter = painterResource(id = resId),
-                        contentDescription = section.title,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .border(1.dp, NocturneDivider, RoundedCornerShape(14.dp))
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(NocturneAccentTint)
-                            .border(1.dp, NocturneDivider, RoundedCornerShape(14.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(s.guideScreenshotSoon, style = MaterialTheme.typography.bodySmall, color = NocturneAccentPale)
-                    }
-                }
+
             }
         }
         Spacer(Modifier.height(28.dp))
