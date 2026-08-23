@@ -216,6 +216,13 @@ class Strings(val lang: AppLanguage) {
     val guideTitle = if (lang == AppLanguage.FA) "راهنمای کامل برنامه" else "Complete Guide"
     val guideSubtitle = if (lang == AppLanguage.FA) "توضیح همه‌ی بخش‌های برنامه، قدم‌به‌قدم" else "Every section explained, step by step"
     val guideScreenshotSoon = if (lang == AppLanguage.FA) "📸 اسکرین‌شات این بخش به‌زودی اضافه می‌شود" else "📸 Screenshot coming soon"
+    val usbConnect = if (lang == AppLanguage.FA) "اتصال USB (با کابل)" else "USB Connection (cable)"
+    val usbConnectDesc = if (lang == AppLanguage.FA) "گوشی را با کابل به سیستم وصل کنید و USB Tethering را روشن کنید" else "Plug the phone into the computer and enable USB Tethering"
+    val usbSearching = if (lang == AppLanguage.FA) "در حال جست‌وجوی سیستم روی شبکه‌ی USB..." else "Searching for the system over the USB network..."
+    val usbNotFound = if (lang == AppLanguage.FA) "سیستمی روی شبکه‌ی USB پیدا نشد.\n۱) کابل را وصل کنید\n۲) در تنظیمات گوشی «اتصال مودم USB / USB Tethering» را روشن کنید\n۳) نرم‌افزار روی ویندوز باز باشد" else "No system found on the USB network.\n1) Plug the cable in\n2) Enable USB Tethering in phone settings\n3) Make sure the Windows app is running"
+    val usbOpenTether = if (lang == AppLanguage.FA) "باز کردن تنظیمات Tethering" else "Open Tethering settings"
+    val usbConnectedTo = if (lang == AppLanguage.FA) "اتصال USB برقرار شد ✓ حالا از تب اسکن استفاده کنید" else "USB connected ✓ Now use the Scan tab"
+    val usbTryAgain = if (lang == AppLanguage.FA) "تلاش مجدد" else "Try again"
     val newUpdateAvailable = if (lang == AppLanguage.FA) "نسخه‌ی جدید موجوده" else "New update available"
     val noNewMessages = if (lang == AppLanguage.FA) "پیام جدیدی نیست" else "No new messages"
     val updateNow = if (lang == AppLanguage.FA) "بروزرسانی" else "Update Now"
@@ -848,6 +855,9 @@ fun MainApp(
                         s = s,
                         currentLanguage = currentLanguage,
                         onLanguageChange = onLanguageChange,
+                        onServerUrlChanged = {
+                            serverUrlState.value = sharedPrefs.getString("server_url", "") ?: ""
+                        },
                         onBack = {
                             currentScreen = AppScreen.SCANNER
                         },
@@ -2592,6 +2602,164 @@ data class UpdateMessage(
     val url: String
 )
 
+// ---------- اتصال USB (تترینگ با کابل) ----------
+// وقتی USB Tethering روشن است، گوشی روی اینترفیس usb0 یک شبکه‌ی محلی /24 می‌سازد و
+// سیستمِ ویندوز روی آن یک IP می‌گیرد. سرور اسکن‌بریج روی پورت ثابت 5050 به همه‌ی
+// کارت‌های شبکه گوش می‌دهد؛ پس ساب‌نتِ USB را با تایم‌اوت کوتاه تک‌خور می‌کنیم و
+// اولین میزانی که پورت 5050 باز داشت، همان سیستم است — بدون QR و بدون اینترنت.
+private fun findSystemOnUsbNetwork(): String? {
+    return try {
+        var usbPrefix: String? = null
+        val ifaces = java.net.NetworkInterface.getNetworkInterfaces()
+        while (ifaces.hasMoreElements()) {
+            val iface = ifaces.nextElement() as java.net.NetworkInterface
+            if (!iface.isUp) continue
+            if (!iface.name.lowercase().contains("usb")) continue
+            val addrs = iface.inetAddresses
+            while (addrs.hasMoreElements()) {
+                val a = addrs.nextElement()
+                if (a is java.net.Inet4Address && !a.isLoopbackAddress) {
+                    val host = a.hostAddress ?: continue
+                    usbPrefix = host.substringBeforeLast('.')
+                    break
+                }
+            }
+            if (usbPrefix != null) break
+        }
+        val prefix = usbPrefix ?: return null
+        (1..254).toList().parallelStream().map { i ->
+            val ip = prefix + "." + i
+            try {
+                val socket = java.net.Socket()
+                socket.connect(java.net.InetSocketAddress(ip, 5050), 250)
+                socket.close()
+                ip
+            } catch (e: Exception) {
+                null
+            }
+        }.filter { obj -> obj != null }.map { obj -> obj as String }.findFirst().orElse(null)
+    } catch (e: Exception) {
+        null
+    }
+}
+
+@Composable
+private fun UsbConnectDialog(
+    s: Strings,
+    onDismiss: () -> Unit,
+    onConnected: (String) -> Unit
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var phase by remember { mutableStateOf("searching") }
+    var foundIp by remember { mutableStateOf("") }
+    var attempt by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(attempt) {
+        phase = "searching"
+        val ip = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            findSystemOnUsbNetwork()
+        }
+        if (ip != null) {
+            foundIp = ip
+            phase = "connected"
+        } else {
+            phase = "notfound"
+        }
+    }
+
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color.White)
+                .padding(22.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Brush.linearGradient(listOf(GradientNavy, NocturneAccent))),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Usb, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(s.usbConnect, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = NocturneText)
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            when (phase) {
+                "searching" -> {
+                    CircularProgressIndicator(color = NocturneAccent, modifier = Modifier.size(28.dp).align(Alignment.CenterHorizontally))
+                    Spacer(Modifier.height(10.dp))
+                    Text(s.usbSearching, style = MaterialTheme.typography.bodySmall, color = NocturneTextMuted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                }
+                "connected" -> {
+                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(34.dp).align(Alignment.CenterHorizontally))
+                    Spacer(Modifier.height(8.dp))
+                    Text(s.usbConnectedTo, style = MaterialTheme.typography.bodySmall, color = NocturneText, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(6.dp))
+                    Text(foundIp, style = MaterialTheme.typography.labelSmall, color = NocturneTextMuted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(14.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(13.dp))
+                            .background(Brush.linearGradient(listOf(GradientNavy, NocturneAccent)))
+                            .clickable {
+                                onConnected(foundIp)
+                                onDismiss()
+                            }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(s.gotIt, color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+                else -> {
+                    Text(s.usbNotFound, style = MaterialTheme.typography.bodySmall, color = NocturneTextMuted, modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(14.dp))
+                    Row {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(13.dp))
+                                .background(NocturneAccentTint)
+                                .clickable { attempt++ }
+                                .padding(vertical = 11.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(s.usbTryAgain, color = NocturneAccentPale, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(13.dp))
+                                .background(Brush.linearGradient(listOf(GradientNavy, NocturneAccent)))
+                                .clickable {
+                                    try {
+                                        context.startActivity(android.content.Intent("android.settings.TETHER_SETTINGS"))
+                                    } catch (e: Exception) {
+                                        try {
+                                            context.startActivity(android.content.Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS))
+                                        } catch (ex: Exception) { }
+                                    }
+                                }
+                                .padding(vertical = 11.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(s.usbOpenTether, color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // صفحه‌ی راهنمای کامل برنامه — مشابه راهنمای سایت اما بومی و با جای اسکرین‌شات.
 // اسکرین‌شات‌ها بعداً به‌صورت فایل‌های guide_connect / guide_scan / ... در پوشه‌ی
 // drawable-nodpi اضافه می‌شوند؛ تا آن موقع جای هر کدام کادر «به‌زودی» نمایش داده می‌شود
@@ -2701,6 +2869,7 @@ fun UserPanelScreen(
     currentLanguage: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
     onBack: () -> Unit,
+    onServerUrlChanged: () -> Unit = {},
     tutorialStep: TutorialStep = TutorialStep.NONE,
     onTutorialStepChange: (TutorialStep) -> Unit = {}
 ) {
@@ -2727,6 +2896,7 @@ fun UserPanelScreen(
     // --- بخش «پیام‌ها»: وقتی نسخه‌ی جدید روی سایت گذاشته بشه، اینجا نمایش داده می‌شه ---
     var showMessagesScreen by remember { mutableStateOf(false) }
     var showGuideScreen by remember { mutableStateOf(false) }
+    var showUsbDialog by remember { mutableStateOf(false) }
     var updateMessage by remember { mutableStateOf<UpdateMessage?>(null) }
     var isLoadingMessages by remember { mutableStateOf(false) }
     val currentVersionName = remember {
@@ -2992,6 +3162,16 @@ fun UserPanelScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        // اتصال USB (با کابل) — بدون QR، برای وقتی که Wi-Fi مناسب نیست
+        SettingRow(
+            icon = Icons.Default.Usb,
+            title = s.usbConnect,
+            subtitle = s.usbConnectDesc,
+            onClick = { showUsbDialog = true }
+        )
+
+        Spacer(Modifier.height(16.dp))
+
         // وبسایت
         SettingRow(
             icon = Icons.Default.Public,
@@ -3007,6 +3187,18 @@ fun UserPanelScreen(
         )
 
         Spacer(Modifier.height(24.dp))
+    }
+
+    // --- دیالوگ اتصال USB: کشف سیستم روی شبکه‌ی تترینگ و وصل شدن به آن ---
+    if (showUsbDialog) {
+        UsbConnectDialog(
+            s = s,
+            onDismiss = { showUsbDialog = false },
+            onConnected = { ip ->
+                sharedPrefs.edit().putString("server_url", "ws://" + ip + ":5050").apply()
+                onServerUrlChanged()
+            }
+        )
     }
 
     // --- صفحه‌ی «راهنما» - کامل، اسکرول‌شونده، با جای اسکرین‌شات هر بخش ---
