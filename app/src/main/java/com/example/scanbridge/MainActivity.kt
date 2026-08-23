@@ -1886,6 +1886,8 @@ fun PairingScreen(
     val sharedPrefs = remember { context.getSharedPreferences("ScanBridgePrefs", Context.MODE_PRIVATE) }
     val haptic = LocalHapticFeedback.current
     var showUsbDialog by remember { mutableStateOf(false) }
+    var scanSoundOn by remember { mutableStateOf(sharedPrefs.getBoolean("scan_sound", true)) }
+    var scanVibrationOn by remember { mutableStateOf(sharedPrefs.getBoolean("scan_vibration", true)) }
     var showConnectChoice by remember { mutableStateOf(false) }
 
     var errorMsg by remember { mutableStateOf("") }
@@ -3461,8 +3463,11 @@ fun UserPanelScreen(
                     Text(s.settingsSound, style = MaterialTheme.typography.bodySmall, color = NocturneText)
                 }
                 Switch(
-                    checked = sharedPrefs.getBoolean("scan_sound", true),
-                    onCheckedChange = { on -> sharedPrefs.edit().putBoolean("scan_sound", on).apply() }
+                    checked = scanSoundOn,
+                    onCheckedChange = { on ->
+                        scanSoundOn = on
+                        sharedPrefs.edit().putBoolean("scan_sound", on).apply()
+                    }
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -3470,8 +3475,11 @@ fun UserPanelScreen(
                     Text(s.settingsVibration, style = MaterialTheme.typography.bodySmall, color = NocturneText)
                 }
                 Switch(
-                    checked = sharedPrefs.getBoolean("scan_vibration", true),
-                    onCheckedChange = { on -> sharedPrefs.edit().putBoolean("scan_vibration", on).apply() }
+                    checked = scanVibrationOn,
+                    onCheckedChange = { on ->
+                        scanVibrationOn = on
+                        sharedPrefs.edit().putBoolean("scan_vibration", on).apply()
+                    }
                 )
             }
         }
