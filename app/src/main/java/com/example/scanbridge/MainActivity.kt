@@ -1900,13 +1900,16 @@ fun PairingScreen(
     var hasCameraPermission by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
     }
+    // کارت «اتصال به سیستم» همیشه ابتدای این صفحه نشان داده می‌شود (انتخاب کابل یا QR)؛
+    // قبلاً اگر دوربین از قبل اجازه داشت، مستقیم دوربینِ QR باز می‌شد و انتخابِ کابل ممکن نبود.
+    var connectCardVisible by remember { mutableStateOf(true) }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { hasCameraPermission = it }
 
     // برخلاف قبل، به‌محض باز شدن این صفحه دیگه خودکار درخواست دسترسی دوربین نمی‌فرستیم. کاربر
     // اول یه دکمه‌ی «شروع اسکن» می‌بینه و فقط وقتی خودش بزنه، دوربین باز و درخواست دسترسی (اگه
     // لازم باشه) نشون داده می‌شه.
-    if (!hasCameraPermission) {
+    if (!hasCameraPermission || connectCardVisible) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -1980,6 +1983,7 @@ fun PairingScreen(
                             .background(NocturneAccentTint)
                             .clickable {
                                 showConnectChoice = false
+                                connectCardVisible = false
                                 launcher.launch(Manifest.permission.CAMERA)
                             }
                             .padding(14.dp),
@@ -2224,6 +2228,19 @@ fun ScannerScreen(
 
     // فقط برای نمایش توی هدر خوش‌آمدگویی - ویرایشش الان توی تب «پنل کاربری» انجام می‌شه.
     val customComputerName = remember { sharedPrefs.getString("custom_computer_name", "---") ?: "---" }
+
+    // اگر کاربر از طریق کابل وصل شده و هیچ‌وقت اجازه‌ی دوربین نگرفته، همین‌جا درخواستش
+    // می‌کنیم — قبلاً این درخواست فقط از مسیر QR زده می‌شد و اتصال اولِ با کابل بدون دوربین
+    // می‌ماند.
+    val scannerCameraPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    LaunchedEffect(Unit) {
+        if (androidx.core.content.ContextCompat.checkSelfPermission(
+                context, android.Manifest.permission.CAMERA
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            scannerCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+        }
+    }
 
     var lastScannedValue by remember { mutableStateOf("") }
     var lastScannedTime by remember { mutableLongStateOf(0L) }
