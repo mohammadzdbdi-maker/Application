@@ -3155,12 +3155,12 @@ private fun GuideScreenContent(s: Strings) {
     val sections = listOf(
         GuideSection(
             if (fa) "۱. اتصال به سیستم" else "1. Connect to System",
-            if (fa) "در تب اسکن، کارت «اتصال به سیستم» را بزنید و QR نمایش‌داده‌شده روی ویندوز را با دوربین گوشی اسکن کنید. گوشی باید در همان وای‌فای سیستم باشد." else "In the Scan tab, tap «Connect to System» and scan the QR code shown on Windows. The phone must be on the same Wi-Fi as the computer.",
+            if (fa) "بعد از زدن «اتصال به سیستم»، روش اتصال را انتخاب کنید: وای‌فای (اسکن QR نمایش‌داده‌شده روی ویندوز) یا کابل USB. برای کابل، در تنظیمات گوشی USB Tethering را روشن کنید — برنامه به محض روشن شدن خودکار وصل می‌شود. راه سریع‌تر: یک‌بار USB Debugging را در گوشی فعال کنید تا دیگر Tethering لازم نباشد و فقط با کابل بزنید و وصل شوید." else "After tapping "Connect to System", choose how: Wi-Fi (scan the QR shown on Windows) or USB cable. For cable, enable USB Tethering in phone settings — the app connects automatically. Faster route: enable USB Debugging once and simply plug in the cable from then on.",
             Icons.Default.QrCode2
         ),
         GuideSection(
             if (fa) "۲. اسکن بارکد" else "2. Scanning Barcodes",
-            if (fa) "دوربین را روی بارکد بگیرید؛ ثبت خودکار انجام می‌شود، نتیجه در کارت «آخرین اسکن» می‌آید و برای سیستم فرستاده می‌شود." else "Point the camera at a barcode; it is recorded automatically, shown in the Last Scan card and sent to the computer.",
+            if (fa) "دوربین را روی بارکد بگیرید؛ ثبت خودکار انجام می‌شود و برای سیستم فرستاده می‌شود. برای بارکدهای ریز از اسلایدر یا دکمه‌های + و − زیر دوربین زوم کنید — دکمه‌های ولوم گوشی هم همین کار را می‌کنند. صفحه هنگام اسکن خاموش نمی‌شود." else "Point the camera at a barcode; it is recorded and sent automatically. For tiny barcodes zoom with the slider or +/− buttons below the camera — volume buttons work too. The screen stays on while scanning.",
             Icons.Default.CenterFocusStrong
         ),
         GuideSection(
@@ -3174,23 +3174,33 @@ private fun GuideScreenContent(s: Strings) {
             Icons.Default.History
         ),
         GuideSection(
-            if (fa) "۵. پنل کاربری" else "5. Profile Tab",
-            if (fa) "تغییر نام سیستم، تغییر زبان، بررسی بروزرسانی، پیام‌ها و همین راهنما — همه در تب «پنل کاربری» جمع شده‌اند." else "Rename the system, change language, check for updates, messages and this guide — all in the Profile tab.",
-            Icons.Default.Person
+            if (fa) "۵. صدا و لرزش" else "5. Sound & Vibration",
+            if (fa) "از پنل کاربری، بخش «صدا و لرزش»، صدای بوق اسکن و لرزش گوشی را جداگانه خاموش یا روشن کنید — مناسب داروخانه‌هایی که سکوت می‌خواهند." else "From the Profile tab, Sound & Vibration section, toggle the scan beep and vibration independently.",
+            Icons.Default.VolumeUp
         ),
         GuideSection(
             if (fa) "۶. حالت داروخانه" else "6. Pharmacy Mode",
-            if (fa) "اینترنت گوشی را به‌کلی قطع می‌کند و فقط ارتباط با سیستم روی شبکه‌ی محلی باز می‌ماند — مناسب داروخانه‌هایی که نمی‌خواهند پرسنل اینترنت داشته باشند." else "Cuts the phone's internet completely while keeping the local network connection to the system alive — ideal when staff should not have internet access.",
+            if (fa) "اینترنت گوشی را به‌کلی قطع می‌کند و فقط ارتباط با سیستم روی شبکه‌ی محلی باز می‌ماند — مناسب داروخانه‌هایی که نمی‌خواهند پرسنل اینترنت داشته باشند." else "Cuts the phone's internet completely while keeping the local network connection to the system alive.",
             Icons.Default.WifiOff
         ),
         GuideSection(
             if (fa) "۷. تغییر سیستم و خروج" else "7. Switch System & Exit",
-            if (fa) "با دکمه‌ی نارنجی بالا-چپِ تب اسکن، گوشی را به سیستم دیگری وصل کنید. دکمه‌ی قرمز کنارش هم از برنامه خارج می‌شود." else "Use the orange button at the top of the Scan tab to pair with another computer. The red button next to it exits the app.",
+            if (fa) "با دکمه‌ی نارنجی بالا-چپِ تب اسکن، اتصال را قطع و روش دیگری (کابل یا وای‌فای) را انتخاب کنید. دکمه‌ی قرمز کنارش هم از برنامه خارج می‌شود." else "Use the orange button at the top of the Scan tab to disconnect and pick another method (cable or Wi-Fi). The red button exits the app.",
             Icons.Default.SwapHoriz
         ),
         GuideSection(
-            if (fa) "۸. تغییر زبان" else "8. Language",
-            if (fa) "از پنل کاربری، بخش «زبان»، بین فارسی و English انتخاب کنید — همه‌ی متن‌های برنامه همان لحظه عوض می‌شوند." else "From the Profile tab, Language section, switch between English and فارسی — the whole app updates instantly.",
+            if (fa) "۸. پنل کاربری" else "8. Profile Tab",
+            if (fa) "تغییر نام سیستم، تغییر زبان، بررسی بروزرسانی، پیام‌ها و همین راهنما — همه در تب «پنل کاربری» جمع شده‌اند." else "Rename the system, change language, check for updates, messages and this guide — all in the Profile tab.",
+            Icons.Default.Person
+        ),
+        GuideSection(
+            if (fa) "۹. بروزرسانی برنامه" else "9. App Update",
+            if (fa) "وقتی نسخه‌ی جدید منتشر شود، در «پیام‌ها» و پنل کاربری خبرش می‌آید. دکمه‌ی بروزرسانی، فایل جدید را مستقیم دانلود می‌کند و بعد از پایان، پنجره‌ی نصب باز می‌شود — بدون مرورگر." else "When a new version is released, you will see it in Messages. The update button downloads the new APK directly and opens the installer when done.",
+            Icons.Default.SystemUpdate
+        ),
+        GuideSection(
+            if (fa) "۱۰. تغییر زبان" else "10. Language",
+            if (fa) "از پنل کاربری، بخش «زبان»، بین فارسی و English انتخاب کنید — همه‌ی متن‌های برنامه همان لحظه عوض می‌شوند." else "From the Profile tab, Language section, switch between English and فارسی instantly.",
             Icons.Default.Language
         )
     )
