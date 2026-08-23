@@ -1887,8 +1887,6 @@ fun PairingScreen(
     val sharedPrefs = remember { context.getSharedPreferences("ScanBridgePrefs", Context.MODE_PRIVATE) }
     val haptic = LocalHapticFeedback.current
     var showUsbDialog by remember { mutableStateOf(false) }
-    var scanSoundOn by remember { mutableStateOf(sharedPrefs.getBoolean("scan_sound", true)) }
-    var scanVibrationOn by remember { mutableStateOf(sharedPrefs.getBoolean("scan_vibration", true)) }
     var showConnectChoice by remember { mutableStateOf(false) }
 
     var errorMsg by remember { mutableStateOf("") }
@@ -3156,7 +3154,7 @@ private fun GuideScreenContent(s: Strings) {
     val sections = listOf(
         GuideSection(
             if (fa) "۱. اتصال به سیستم" else "1. Connect to System",
-            if (fa) "بعد از زدن «اتصال به سیستم»، روش اتصال را انتخاب کنید: وای‌فای (اسکن QR نمایش‌داده‌شده روی ویندوز) یا کابل USB. برای کابل، در تنظیمات گوشی USB Tethering را روشن کنید — برنامه به محض روشن شدن خودکار وصل می‌شود. راه سریع‌تر: یک‌بار USB Debugging را در گوشی فعال کنید تا دیگر Tethering لازم نباشد و فقط با کابل بزنید و وصل شوید." else "After tapping "Connect to System", choose how: Wi-Fi (scan the QR shown on Windows) or USB cable. For cable, enable USB Tethering in phone settings — the app connects automatically. Faster route: enable USB Debugging once and simply plug in the cable from then on.",
+            if (fa) "بعد از زدن «اتصال به سیستم»، روش اتصال را انتخاب کنید: وای‌فای (اسکن QR نمایش‌داده‌شده روی ویندوز) یا کابل USB. برای کابل، در تنظیمات گوشی USB Tethering را روشن کنید — برنامه به محض روشن شدن خودکار وصل می‌شود. راه سریع‌تر: یک‌بار USB Debugging را در گوشی فعال کنید تا دیگر Tethering لازم نباشد و فقط با کابل بزنید و وصل شوید." else "After tapping «Connect to System», choose how: Wi-Fi (scan the QR shown on Windows) or USB cable. For cable, enable USB Tethering in phone settings — the app connects automatically. Faster route: enable USB Debugging once and simply plug in the cable from then on.",
             Icons.Default.QrCode2
         ),
         GuideSection(
@@ -3287,6 +3285,8 @@ fun UserPanelScreen(
     var showMessagesScreen by remember { mutableStateOf(false) }
     var showGuideScreen by remember { mutableStateOf(false) }
     var showUsbDialog by remember { mutableStateOf(false) }
+    var scanSoundOn by remember { mutableStateOf(sharedPrefs.getBoolean("scan_sound", true)) }
+    var scanVibrationOn by remember { mutableStateOf(sharedPrefs.getBoolean("scan_vibration", true)) }
     var updateMessage by remember { mutableStateOf<UpdateMessage?>(null) }
     var isLoadingMessages by remember { mutableStateOf(false) }
     val currentVersionName = remember {
