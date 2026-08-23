@@ -9,6 +9,7 @@ import android.content.Context
 import android.view.WindowManager
 import androidx.compose.runtime.DisposableEffect
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
