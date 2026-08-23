@@ -1469,41 +1469,97 @@ fun TutorialCard(
     onNext: (() -> Unit)? = null,
     nextLabel: String = "بعدی"
 ) {
+    // ورود نرم: کارت با کمی تأخیرِ محسوس از پایین بالا می‌آید و محو-به-واضح می‌شود.
+    var entered by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { entered = true }
+    val progress by animateFloatAsState(if (entered) 1f else 0f, label = "tutorialEnter")
+    val offsetY by animateDpAsState(if (entered) 0.dp else 36.dp, label = "tutorialOffsetY")
+
     Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = NavyPrimary),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                translationY = offsetY.toPx()
+                alpha = progress
+                shape = RoundedCornerShape(24.dp)
+                clip = true
+                shadowElevation = 18.dp.toPx()
+                ambientShadowColor = NocturneAccent.copy(alpha = 0.30f)
+                spotShadowColor = NocturneAccent.copy(alpha = 0.45f)
+            },
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.Top
-        ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // چیپ گرادیانی آیکون — همان زبان بصری دکمه‌های لوکس
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Brush.linearGradient(listOf(GradientNavy, NocturneAccent))),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lightbulb,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text(
+                        "راهنمای قدم‌به‌قدم",
+                        color = NocturneAccentPale,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        title,
+                        color = NocturneText,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
             Box(
                 modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.18f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Lightbulb,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                Spacer(Modifier.height(4.dp))
-                Text(description, color = Color.White.copy(alpha = 0.9f), style = MaterialTheme.typography.bodySmall)
-                if (onNext != null) {
-                    Spacer(Modifier.height(10.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = onNext, colors = ButtonDefaults.textButtonColors(contentColor = Color.White)) {
-                            Text(nextLabel, fontWeight = FontWeight.Bold)
-                        }
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(NocturneDivider)
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            Text(
+                description,
+                color = NocturneTextMuted,
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            if (onNext != null) {
+                Spacer(Modifier.height(14.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    // دکمه‌ی «بعدی» — همان دکمه‌ی گرادیانی برجسته‌ی اپ
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(13.dp))
+                            .background(Brush.linearGradient(listOf(GradientNavy, NocturneAccent)))
+                            .clickable { onNext() }
+                            .padding(horizontal = 22.dp, vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            nextLabel,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelLarge
+                        )
                     }
                 }
             }

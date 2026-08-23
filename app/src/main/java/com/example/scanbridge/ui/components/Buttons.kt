@@ -1,7 +1,11 @@
 package com.example.scanbridge.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
@@ -21,10 +25,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.scanbridge.ui.theme.GradientNavy
 import com.example.scanbridge.ui.theme.NocturneAccent
 import com.example.scanbridge.ui.theme.NocturneAccentContainer
 import com.example.scanbridge.ui.theme.NocturneAccentLight
@@ -48,24 +55,40 @@ fun PrimaryButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    val background by animateColorAsState(
-        targetValue = when {
-            !enabled -> NocturneAccent.copy(alpha = 0.45f)
-            pressed -> NocturneAccentLight
-            else -> NocturneAccent
-        },
-        label = "primaryButtonBg"
-    )
 
-    Surface(
-        onClick = onClick,
-        enabled = enabled,
+    // حس لوکس: گرادیان آبی (همان دکمه‌های راهنمای سایت)، سایه‌ی رنگی که موقع فشار جمع
+    // می‌شود و کمی جمع‌شدگی لمسی — دکمه واقعاً «برجسته» به نظر می‌رسد.
+    val scale by animateFloatAsState(if (pressed) 0.97f else 1f, label = "primaryBtnScale")
+    val elevation by animateDpAsState(if (pressed) 3.dp else 10.dp, label = "primaryBtnElev")
+    val brush = when {
+        !enabled -> Brush.linearGradient(
+            listOf(NocturneAccent.copy(alpha = 0.38f), NocturneAccent.copy(alpha = 0.38f))
+        )
+        pressed -> Brush.linearGradient(listOf(NocturneAccent, NocturneAccentLight))
+        else -> Brush.linearGradient(listOf(GradientNavy, NocturneAccent))
+    }
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp),
-        shape = CircleShape,
-        color = background,
-        interactionSource = interactionSource
+            .height(52.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                shape = CircleShape
+                clip = true
+                shadowElevation = elevation.toPx()
+                ambientShadowColor = NocturneAccent
+                spotShadowColor = NocturneAccent
+            }
+            .background(brush, CircleShape)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                enabled = enabled,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 20.dp),
@@ -73,12 +96,12 @@ fun PrimaryButton(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (icon != null) {
-                Icon(icon, contentDescription = null, tint = NocturneBackground, modifier = Modifier.size(18.dp))
+                Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                 androidx.compose.foundation.layout.Spacer(Modifier.size(8.dp))
             }
             Text(
                 text = label,
-                color = NocturneBackground,
+                color = Color.White,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
