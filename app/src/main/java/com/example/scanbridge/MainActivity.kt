@@ -156,6 +156,8 @@ class Strings(val lang: AppLanguage) {
     val connectToSystem = if (lang == AppLanguage.FA) "اتصال به سیستم" else "Connect to System"
     val pairingViaWifi = if (lang == AppLanguage.FA) "وای‌فای" else "Wi-Fi"
     val pairingViaUsb = if (lang == AppLanguage.FA) "اتصال با کابل USB" else "Connect via USB Cable"
+    val chooseConnectionTitle = if (lang == AppLanguage.FA) "چطور وصل می‌شوید؟" else "How do you want to connect?"
+    val chooseConnectionDesc = if (lang == AppLanguage.FA) "هر دو روش به همان سیستم وصل می‌شوند" else "Both methods connect to the same system"
     val notConnectedYet = if (lang == AppLanguage.FA) "هنوز به هیچ سیستمی وصل نیستی" else "Not connected to a system yet"
     val pairingErrorBrand = if (lang == AppLanguage.FA) "این QR کد مربوط به ScanBridge نیست" else "Not a ScanBridge QR code"
     val pairingErrorFormat = if (lang == AppLanguage.FA) "ساختار QR کد اشتباه است" else "Invalid QR format"
@@ -1857,6 +1859,7 @@ fun PairingScreen(
     val sharedPrefs = remember { context.getSharedPreferences("ScanBridgePrefs", Context.MODE_PRIVATE) }
     val haptic = LocalHapticFeedback.current
     var showUsbDialog by remember { mutableStateOf(false) }
+    var showConnectChoice by remember { mutableStateOf(false) }
 
     var errorMsg by remember { mutableStateOf("") }
     val toneGenerator = remember { ToneGenerator(AudioManager.STREAM_MUSIC, 100) }
@@ -1922,16 +1925,85 @@ fun PairingScreen(
                 )
                 Spacer(Modifier.height(28.dp))
                 PrimaryButton(
-                    label = s.connectToSystem + " (" + s.pairingViaWifi + ")",
-                    onClick = { launcher.launch(Manifest.permission.CAMERA) },
+                    label = s.connectToSystem,
+                    onClick = { showConnectChoice = true },
                     icon = Icons.Default.QrCodeScanner
                 )
-                Spacer(Modifier.height(10.dp))
-                SecondaryButton(
-                    label = s.pairingViaUsb,
-                    onClick = { showUsbDialog = true },
-                    icon = Icons.Default.Usb
-                )
+            }
+        }
+
+        // انتخاب روش اتصال: وای‌فای (QR) یا کابل USB
+        if (showConnectChoice) {
+            androidx.compose.ui.window.Dialog(onDismissRequest = { showConnectChoice = false }) {
+                Column(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(Color.White)
+                        .padding(22.dp)
+                ) {
+                    Text(s.chooseConnectionTitle, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = NocturneText)
+                    Spacer(Modifier.height(4.dp))
+                    Text(s.chooseConnectionDesc, style = MaterialTheme.typography.bodySmall, color = NocturneTextMuted)
+                    Spacer(Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(NocturneAccentTint)
+                            .clickable {
+                                showConnectChoice = false
+                                launcher.launch(Manifest.permission.CAMERA)
+                            }
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Brush.linearGradient(listOf(GradientNavy, NocturneAccent))),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.QrCode2, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text(s.pairingViaWifi, fontWeight = FontWeight.Bold, color = NocturneText, style = MaterialTheme.typography.titleSmall)
+                            Text(s.pairingInstruction, style = MaterialTheme.typography.labelSmall, color = NocturneTextMuted)
+                        }
+                    }
+
+                    Spacer(Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(NocturneAccentTint)
+                            .clickable {
+                                showConnectChoice = false
+                                showUsbDialog = true
+                            }
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Brush.linearGradient(listOf(GradientOrange, AmberAccent))),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Usb, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text(s.pairingViaUsb, fontWeight = FontWeight.Bold, color = NocturneText, style = MaterialTheme.typography.titleSmall)
+                            Text(s.usbConnectDesc, style = MaterialTheme.typography.labelSmall, color = NocturneTextMuted)
+                        }
+                    }
+                }
             }
         }
 
@@ -2740,6 +2812,15 @@ private fun UsbConnectDialog(
             val deadline = System.currentTimeMillis() + 45000
             var result: String? = null
             while (result == null && System.currentTimeMillis() < deadline) {
+                // مسیر صفر-ضربه (ADB): اگر USB Debugging فعال باشد، خودِ سیستم با کابل
+                // ws://127.0.0.1:5050 را به گوشی فوروارد کرده — یک پروب سریع کافی است.
+                try {
+                    val probe = java.net.Socket()
+                    probe.connect(java.net.InetSocketAddress("127.0.0.1", 5050), 300)
+                    probe.close()
+                    result = "127.0.0.1"
+                    break
+                } catch (e: Exception) { }
                 netInfo = getTetherNetworksInfo()
                 val scanned = findSystemOnUsbNetwork()
                 if (scanned != null) {
