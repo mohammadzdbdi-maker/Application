@@ -38,6 +38,7 @@ import com.example.scanbridge.ui.theme.GradientNavy
 import com.example.scanbridge.ui.theme.GradientOrange
 import com.example.scanbridge.ui.theme.GradientRed
 import com.example.scanbridge.ui.theme.NocturneAccent
+import com.example.scanbridge.ui.theme.NocturneAccentPale
 import com.example.scanbridge.ui.theme.NocturneAccentContainer
 import com.example.scanbridge.ui.theme.NocturneAccentLight
 import com.example.scanbridge.ui.theme.NocturneAccentTint
