@@ -2796,63 +2796,27 @@ fun HistoryScreen(
     }
 }
 
-// دانلود و نصب مستقیم نسخه‌ی جدید: فایل APK با DownloadManager گرفته می‌شود (نوار پیشرفت
-// در اعلان‌ها) و بلافاصله بعد از پایان، پنجره‌ی نصب اندروید باز می‌شود. دفعه‌ی اول سیستم
-// می‌پرسد اجازه‌ی «نصب از منابع ناشناس» برای این برنامه داده شود که یک‌بار برای همیشه است.
-private fun downloadAndInstallUpdate(context: android.content.Context, url: String) {
+// نصب مستقیم نسخه‌ی جدید (دانلود APK با DownloadManager + باز کردن پنجره‌ی نصب اندروید) قبلاً
+// اینجا انجام می‌شد، اما این کار به دسترسی android.permission.REQUEST_INSTALL_PACKAGES نیاز
+// دارد که کافه‌بازار اجازه‌ی استفاده‌اش را به اپ‌های عادی نمی‌دهد (ریسک نصب مخفیانه‌ی پکیج) و
+// درخواست انتشار را رد می‌کند. به‌جایش فقط لینک آپدیت را باز می‌کنیم — اگر لینک صفحه‌ی برنامه
+// در بازار باشد، خود بازار آپدیت را مدیریت می‌کند؛ در غیر این صورت در مرورگر باز می‌شود.
+private fun openUpdateLink(context: android.content.Context, url: String) {
     try {
-        val request = android.app.DownloadManager.Request(android.net.Uri.parse(url))
-            .setTitle("ScanBridge — نسخه جدید")
-            .setDescription("در حال دانلود نسخه جدید...")
-            .setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(
-                android.os.Environment.DIRECTORY_DOWNLOADS,
-                "scanbridge-update.apk"
-            )
-            .setMimeType("application/vnd.android.package-archive")
-
-        val dm = context.getSystemService(android.content.Context.DOWNLOAD_SERVICE) as android.app.DownloadManager
-        val downloadId = dm.enqueue(request)
-
-        val filter = android.content.IntentFilter(android.app.DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-        val receiver = object : android.content.BroadcastReceiver() {
-            override fun onReceive(c: android.content.Context?, intent: android.content.Intent?) {
-                val doneId = intent?.getLongExtra(android.app.DownloadManager.EXTRA_DOWNLOAD_ID, -1L) ?: -1L
-                if (doneId != downloadId) return
-                try { context.unregisterReceiver(this) } catch (e: Exception) { }
-                val uri = dm.getUriForDownloadedFile(downloadId)
-                if (uri == null) {
-                    android.widget.Toast.makeText(context, "دانلود ناموفق بود", android.widget.Toast.LENGTH_SHORT).show()
-                    return
-                }
-                val install = android.content.Intent(android.content.Intent.ACTION_VIEW)
-                    .setDataAndType(uri, "application/vnd.android.package-archive")
-                    .setFlags(
-                        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                        android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-                    )
-                try {
-                    context.startActivity(install)
-                } catch (e: Exception) {
-                    android.widget.Toast.makeText(context, "باز کردن نصب ممکن نشد", android.widget.Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-        context.registerReceiver(receiver, filter)
-
-        android.widget.Toast.makeText(
-            context,
-            "در حال دانلود نسخه جدید... پیشرفت را از نوار اعلان ببینید",
-            android.widget.Toast.LENGTH_LONG
-        ).show()
+        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+            .setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
     } catch (e: Exception) {
-        android.widget.Toast.makeText(context, "شروع دانلود ممکن نشد: " + e.message, android.widget.Toast.LENGTH_SHORT).show()
+        android.widget.Toast.makeText(context, "باز کردن لینک ممکن نشد: " + e.message, android.widget.Toast.LENGTH_SHORT).show()
     }
 }
 
 // آدرسی که برنامه برای بررسی «پیام‌های آپدیت» بهش سر می‌زنه. باید یه فایل JSON با این ساختار
-// اونجا آپلود بشه: {"version": "1.1.0", "message": "توضیح آپدیت", "url": "لینک دانلود یا صفحه‌ی دانلود"}
+// اونجا آپلود بشه: {"version": "1.1.0", "message": "توضیح آپدیت", "url": "..."}
 // اگه نسخه‌ی داخل این فایل با نسخه‌ی نصب‌شده‌ی برنامه فرق کنه، یه پیام جدید توی پنل کاربری نشون داده می‌شه.
+// چون دیگه اپ خودش APK رو دانلود/نصب نمی‌کنه (به‌خاطر قانون کافه‌بازار)، بهتره این "url" به
+// صفحه‌ی برنامه توی کافه‌بازار اشاره کنه (مثلاً https://cafebazaar.ir/app/<package-name>) تا با
+// زدن دکمه‌ی آپدیت، کاربر به بازار برود و خود بازار آپدیت را نصب کند.
 const val UPDATE_CHECK_URL = "https://scanbridge.ir/app/update.json"
 
 data class UpdateMessage(
@@ -3697,7 +3661,7 @@ fun UserPanelScreen(
                         available = hasNewMessage,
                         onUpdate = if (hasNewMessage && msg.url.isNotEmpty()) {
                             {
-                                downloadAndInstallUpdate(context, msg.url)
+                                openUpdateLink(context, msg.url)
                             }
                         } else null
                     )
