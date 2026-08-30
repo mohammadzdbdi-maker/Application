@@ -380,6 +380,12 @@ private fun JSONObject.optStringOrNull(key: String): String? {
 class WebSocketManager(
     private val url: String,
     private val deviceName: String,
+    // شناسه‌ی یکتا و پایدارِ همین نصبِ اپ (UUID که یک‌بار ساخته و در SharedPreferences ذخیره
+    // می‌شود - نگاه کنید به MainApp پایین‌تر). برخلاف deviceName (که فقط «سازنده + مدل» است و برای
+    // دو گوشیِ هم‌مدل کاملاً یکسان می‌شود)، deviceId واقعاً یکتاست - دسکتاپ از آن برای تشخیص «همین
+    // گوشی» (نه یک گوشیِ دیگرِ هم‌مدل) استفاده می‌کند: هم برای اینکه اتصال دو گوشیِ هم‌مدل با هم
+    // قاطی نشود، هم برای اینکه تغییرِ نامِ یک گوشی روی دسکتاپ برای گوشیِ بعدیِ هم‌مدل اعمال نماند.
+    private val deviceId: String,
     private val onStatusChange: (ConnectionStatus) -> Unit,
     private val onAckReceived: (String) -> Unit,
     private val onMessageBuffered: (Int) -> Unit,
@@ -412,6 +418,7 @@ class WebSocketManager(
                     onStatusChange(ConnectionStatus.CONNECTED)
                     val registerMsg = JSONObject().apply {
                         put("deviceName", deviceName)
+                        put("deviceId", deviceId)
                     }.toString()
                     webSocket.send(registerMsg)
                     flushQueue()
@@ -501,6 +508,7 @@ class WebSocketManager(
     fun sendBarcode(barcode: String): Boolean {
         val jsonMsg = JSONObject().apply {
             put("deviceName", deviceName)
+            put("deviceId", deviceId)
             put("barcode", barcode)
         }.toString()
 
@@ -565,6 +573,7 @@ class WebSocketManager(
             val barcode = messageQueue.peek() ?: break
             val jsonMsg = JSONObject().apply {
                 put("deviceName", deviceName)
+                put("deviceId", deviceId)
                 put("barcode", barcode)
             }.toString()
 
@@ -660,6 +669,21 @@ fun MainApp(
     val context = LocalContext.current
     val sharedPrefs = remember { context.getSharedPreferences("ScanBridgePrefs", Context.MODE_PRIVATE) }
     val deviceName = remember { "${Build.MANUFACTURER} ${Build.MODEL}" }
+    // شناسه‌ی یکتای همین نصبِ اپ - یک‌بار ساخته و برای همیشه در SharedPreferences ذخیره می‌شود (پس
+    // با ری‌استارت اپ یا اتصال مجدد عوض نمی‌شود، ولی با نصب مجدد اپ دوباره ساخته می‌شود - قابل قبول
+    // چون هدف فقط تفکیک دو گوشیِ فیزیکیِ هم‌مدل از هم است، نه شناسایی دائمی سخت‌افزار). برخلاف
+    // deviceName (که فقط سازنده+مدل است)، این واقعاً بین دو گوشیِ یک مدل هم فرق می‌کند - نگاه کنید
+    // به توضیح بالای WebSocketManager.deviceId.
+    val deviceId = remember {
+        val existing = sharedPrefs.getString("device_id", null)
+        if (!existing.isNullOrBlank()) {
+            existing
+        } else {
+            val generated = java.util.UUID.randomUUID().toString()
+            sharedPrefs.edit().putString("device_id", generated).apply()
+            generated
+        }
+    }
 
     // Intro فقط بار اول نشان داده می‌شود؛ دفعات بعد مستقیم تب اسکن باز می‌شود
     var currentScreen by remember {
@@ -714,6 +738,7 @@ fun MainApp(
             WebSocketManager(
                 url = serverUrlState.value,
                 deviceName = deviceName,
+                deviceId = deviceId,
                 onStatusChange = { connectionStatus = it },
                 onAckReceived = { ack -> Log.d("ScanBridge", "Ack: $ack") },
                 onMessageBuffered = { bufferedCount = it },
